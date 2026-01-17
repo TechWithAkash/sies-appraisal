@@ -82,6 +82,11 @@ function ScoreComparisonRow({ label, selfScore, reviewerScore, maxScore, onRevie
 function PartAReview({ data }) {
     if (!data) return <p className="text-slate-500">No data available</p>;
 
+    // Handle both data structures: data.basic (from context) and data.basicDetails (legacy)
+    const basicDetails = data.basic || data.basicDetails || {};
+    const qualifications = data.qualifications || [];
+    const experience = data.experience || {};
+
     return (
         <div className="space-y-6">
             {/* Basic Details */}
@@ -90,7 +95,7 @@ function PartAReview({ data }) {
                     <Card.Title>Basic Details</Card.Title>
                 </Card.Header>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {Object.entries(data.basicDetails || {}).map(([key, value]) => (
+                    {Object.entries(basicDetails).filter(([key]) => key !== 'appraisalId' && key !== 'id').map(([key, value]) => (
                         <div key={key}>
                             <p className="text-sm text-slate-500 capitalize">{key.replace(/([A-Z])/g, ' $1')}</p>
                             <p className="font-medium text-slate-900">{value || '—'}</p>
@@ -107,11 +112,12 @@ function PartAReview({ data }) {
                 <Table
                     columns={[
                         { key: 'degree', label: 'Degree' },
+                        { key: 'examination', label: 'Examination' },
                         { key: 'specialization', label: 'Specialization' },
                         { key: 'university', label: 'University' },
-                        { key: 'year', label: 'Year' },
+                        { key: 'yearOfPassing', label: 'Year' },
                     ]}
-                    data={data.qualifications || []}
+                    data={qualifications}
                     emptyMessage="No qualifications listed"
                 />
             </Card>
@@ -124,15 +130,15 @@ function PartAReview({ data }) {
                 <div className="grid grid-cols-3 gap-4">
                     <div>
                         <p className="text-sm text-slate-500">Teaching Experience</p>
-                        <p className="text-2xl font-bold text-slate-900">{data.experience?.teachingYears || 0} years</p>
+                        <p className="text-2xl font-bold text-slate-900">{experience?.teachingYears || experience?.totalTeaching || 0} years</p>
                     </div>
                     <div>
                         <p className="text-sm text-slate-500">Industry Experience</p>
-                        <p className="text-2xl font-bold text-slate-900">{data.experience?.industryYears || 0} years</p>
+                        <p className="text-2xl font-bold text-slate-900">{experience?.industryYears || experience?.industryExperience || 0} years</p>
                     </div>
                     <div>
                         <p className="text-sm text-slate-500">Current Institution</p>
-                        <p className="text-2xl font-bold text-slate-900">{data.experience?.currentInstitutionYears || 0} years</p>
+                        <p className="text-2xl font-bold text-slate-900">{experience?.currentInstitutionYears || experience?.presentInstitution || 0} years</p>
                     </div>
                 </div>
             </Card>
@@ -566,8 +572,8 @@ export default function ReviewDetailPage({ params }) {
                             return (
                                 <div key={status} className="flex items-center flex-1">
                                     <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${isComplete ? 'bg-emerald-500 border-emerald-500 text-white'
-                                            : isCurrent ? 'bg-white border-amber-500 text-amber-500'
-                                                : 'bg-white border-slate-300 text-slate-400'
+                                        : isCurrent ? 'bg-white border-amber-500 text-amber-500'
+                                            : 'bg-white border-slate-300 text-slate-400'
                                         }`}>
                                         {isComplete ? <CheckCircle size={20} /> : <Clock size={20} />}
                                     </div>

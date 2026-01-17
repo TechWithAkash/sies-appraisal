@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
 import Alert from '@/components/ui/Alert';
 import ProgressBar from '@/components/ui/ProgressBar';
+import { SuccessModal } from '@/components/ui/Modal';
 import { MultiFileUpload } from '@/components/ui/FileUpload';
 import {
   Save,
@@ -76,6 +77,8 @@ export default function PartEPage() {
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // Sample data for prototype
   const loadSampleData = () => {
@@ -86,16 +89,18 @@ export default function PartEPage() {
     setTrainingNeeds('Advanced Machine Learning workshops, Research methodology training, Leadership and management skills development, Grant writing workshop');
   };
 
+  // Load data - only run once when appraisal data is available
   useEffect(() => {
-    if (fullData?.partE) {
+    if (fullData?.partE && !dataLoaded) {
       setSelfSummary(fullData.partE.selfSummary || '');
       setGoals(fullData.partE.goals || '');
       setStrengths(fullData.partE.strengths || '');
       setAreasForImprovement(fullData.partE.areasForImprovement || '');
       setTrainingNeeds(fullData.partE.trainingNeeds || '');
       setSupportingDocuments(fullData.partE.supportingDocuments || []);
+      setDataLoaded(true);
     }
-  }, [fullData]);
+  }, [fullData, dataLoaded]);
 
   const handleSave = async () => {
     if (!appraisal) return;
@@ -111,8 +116,7 @@ export default function PartEPage() {
         supportingDocuments,
       });
       recalculateTotals(appraisal.id);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to save:', error);
     } finally {
@@ -146,20 +150,9 @@ export default function PartEPage() {
             Back to Appraisal Overview
           </Link>
           {!isReadOnly && (
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={loadSampleData} size="sm">
-                Load Sample Data
-              </Button>
-              {saved && (
-                <span className="flex items-center gap-1 text-sm text-emerald-600">
-                  <CheckCircle size={16} />
-                  Saved successfully
-                </span>
-              )}
-              <Button icon={Save} onClick={handleSave} loading={saving}>
-                Save All Changes
-              </Button>
-            </div>
+            <Button variant="outline" onClick={loadSampleData} size="sm">
+              Load Sample Data
+            </Button>
           )}
         </div>
 
@@ -416,6 +409,26 @@ export default function PartEPage() {
             Great job! All sections of Part E are complete. Don&apos;t forget to save your changes.
           </Alert>
         )}
+
+        {/* Bottom Navigation */}
+        {!isReadOnly && (
+          <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-lg border sticky bottom-4">
+            <Button onClick={handleSave} loading={saving} className="bg-emerald-600 hover:bg-emerald-700 px-8">
+              <Save size={16} className="mr-2" />
+              Save Part E
+            </Button>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Part E Saved Successfully!"
+          message="Your self-assessment has been saved. All parts are now complete! You can review and submit your appraisal from the overview page."
+          buttonText="Continue"
+          redirectUrl="/appraisal"
+        />
       </div>
     </DashboardLayout>
   );

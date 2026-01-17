@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import ProgressBar from '@/components/ui/ProgressBar';
+import { SuccessModal } from '@/components/ui/Modal';
 import {
     Save,
     ArrowLeft,
@@ -75,8 +76,8 @@ function ValueRating({ id, label, value, maxValue, onChange, disabled }) {
                                 onClick={() => !disabled && onChange(rating.value)}
                                 disabled={disabled}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${value === rating.value
-                                        ? `${rating.color} text-white shadow-md scale-105`
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    ? `${rating.color} text-white shadow-md scale-105`
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                             >
                                 {rating.label}
@@ -108,9 +109,11 @@ export default function PartDPage() {
 
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     useEffect(() => {
-        if (fullData?.partD) {
+        if (fullData?.partD && !dataLoaded) {
             setValues({
                 attendance: fullData.partD.attendance || 0,
                 responsibility: fullData.partD.responsibility || 0,
@@ -119,8 +122,9 @@ export default function PartDPage() {
                 inclusiveness: fullData.partD.inclusiveness || 0,
                 conduct: fullData.partD.conduct || 0,
             });
+            setDataLoaded(true);
         }
-    }, [fullData]);
+    }, [fullData, dataLoaded]);
 
     const handleValueChange = (key, value) => {
         setValues(prev => ({ ...prev, [key]: value }));
@@ -145,8 +149,7 @@ export default function PartDPage() {
         try {
             savePartD(appraisal.id, values);
             recalculateTotals(appraisal.id);
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Failed to save:', error);
         } finally {
@@ -182,20 +185,9 @@ export default function PartDPage() {
                         Back to Appraisal Overview
                     </Link>
                     {!isReadOnly && (
-                        <div className="flex items-center gap-3">
-                            <Button variant="outline" onClick={loadSampleData} size="sm">
-                                Load Sample Data
-                            </Button>
-                            {saved && (
-                                <span className="flex items-center gap-1 text-sm text-emerald-600">
-                                    <CheckCircle size={16} />
-                                    Saved successfully
-                                </span>
-                            )}
-                            <Button icon={Save} onClick={handleSave} loading={saving}>
-                                Save All Changes
-                            </Button>
-                        </div>
+                        <Button variant="outline" onClick={loadSampleData} size="sm">
+                            Load Sample Data
+                        </Button>
                     )}
                 </div>
 
@@ -272,6 +264,26 @@ export default function PartDPage() {
                         </div>
                     </div>
                 </Card>
+
+                {/* Bottom Navigation */}
+                {!isReadOnly && (
+                    <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-lg border sticky bottom-4">
+                        <Button onClick={handleSave} loading={saving} className="bg-emerald-600 hover:bg-emerald-700 px-8">
+                            <Save size={16} className="mr-2" />
+                            Save Part D
+                        </Button>
+                    </div>
+                )}
+
+                {/* Success Modal */}
+                <SuccessModal
+                    isOpen={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    title="Part D Saved Successfully!"
+                    message="Your values and ethics assessment has been saved. You can now proceed to Part E for Self Assessment."
+                    buttonText="Continue"
+                    redirectUrl="/appraisal"
+                />
             </div>
         </DashboardLayout>
     );

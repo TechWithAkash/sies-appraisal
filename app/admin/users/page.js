@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useAppraisal } from '@/lib/context/AppraisalContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
@@ -22,8 +23,14 @@ import {
     UserCheck,
     UserX,
     Shield,
+    FileText,
+    Eye,
+    Building2,
+    CheckCircle,
+    Clock,
 } from 'lucide-react';
-import { users } from '@/lib/data/mockData';
+import Link from 'next/link';
+import { users, departments } from '@/lib/data/mockData';
 
 const roleConfig = {
     TEACHER: { label: 'Teacher', variant: 'info' },
@@ -33,18 +40,20 @@ const roleConfig = {
     ADMIN: { label: 'Admin', variant: 'secondary' },
 };
 
-const departments = [
-    'Computer Science',
-    'Information Technology',
-    'Electronics',
-    'Mechanical',
-    'Civil',
-    'MBA',
-    'MCA',
-];
+const statusConfig = {
+    DRAFT: { label: 'Draft', variant: 'secondary' },
+    SUBMITTED: { label: 'With HOD', variant: 'warning' },
+    HOD_REVIEWED: { label: 'With IQAC', variant: 'info' },
+    IQAC_REVIEWED: { label: 'With Principal', variant: 'purple' },
+    PRINCIPAL_REVIEWED: { label: 'Completed', variant: 'success' },
+    NOT_STARTED: { label: 'Not Started', variant: 'secondary' },
+};
 
 export default function AdminUsersPage() {
     const { user: currentUser } = useAuth();
+    const { getAllAppraisals } = useAppraisal();
+
+    const allAppraisals = getAllAppraisals();
 
     const [userList, setUserList] = useState(users);
     const [showModal, setShowModal] = useState(false);
@@ -146,6 +155,12 @@ export default function AdminUsersPage() {
         ));
     };
 
+    // Get appraisal status for a user
+    const getAppraisalStatus = (userId) => {
+        const appraisal = allAppraisals.find(a => a.teacherId === userId);
+        return appraisal?.status || 'NOT_STARTED';
+    };
+
     const columns = [
         {
             key: 'name',
@@ -163,10 +178,6 @@ export default function AdminUsersPage() {
             ),
         },
         {
-            key: 'employeeId',
-            label: 'Employee ID',
-        },
-        {
             key: 'role',
             label: 'Role',
             render: (value) => {
@@ -180,13 +191,18 @@ export default function AdminUsersPage() {
             render: (value) => value || '—',
         },
         {
-            key: 'designation',
-            label: 'Designation',
-            render: (value) => value || '—',
+            key: 'appraisalStatus',
+            label: 'Appraisal',
+            render: (_, row) => {
+                if (row.role !== 'TEACHER') return <span className="text-slate-400 text-sm">N/A</span>;
+                const status = getAppraisalStatus(row.id);
+                const config = statusConfig[status] || { label: status, variant: 'secondary' };
+                return <Badge variant={config.variant}>{config.label}</Badge>;
+            },
         },
         {
             key: 'isActive',
-            label: 'Status',
+            label: 'Account',
             render: (value) => (
                 <Badge variant={value !== false ? 'success' : 'danger'}>
                     {value !== false ? 'Active' : 'Inactive'}
@@ -198,6 +214,17 @@ export default function AdminUsersPage() {
             label: '',
             render: (_, row) => (
                 <div className="flex gap-1">
+                    {row.role === 'TEACHER' && (
+                        <Link href={`/review/${allAppraisals.find(a => a.teacherId === row.id)?.id || ''}`}>
+                            <button
+                                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg"
+                                title="View Appraisal"
+                                disabled={!allAppraisals.find(a => a.teacherId === row.id)}
+                            >
+                                <Eye size={16} />
+                            </button>
+                        </Link>
+                    )}
                     <button
                         onClick={() => handleToggleActive(row.id)}
                         className={`p-2 rounded-lg ${row.isActive !== false
@@ -234,14 +261,15 @@ export default function AdminUsersPage() {
 
             <div className="p-6 space-y-6">
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                     <StatCard
                         title="Total Users"
                         value={totalUsers}
                         icon={Users}
+                        color="blue"
                     />
                     <StatCard
-                        title="Active Users"
+                        title="Active"
                         value={activeUsers}
                         icon={UserCheck}
                         color="emerald"
@@ -250,15 +278,59 @@ export default function AdminUsersPage() {
                         title="Teachers"
                         value={teacherCount}
                         icon={Users}
-                        color="blue"
+                        color="indigo"
                     />
                     <StatCard
-                        title="Admins & Reviewers"
-                        value={adminCount}
-                        icon={Shield}
+                        title="HODs"
+                        value={userList.filter(u => u.role === 'HOD').length}
+                        icon={Building2}
+                        color="amber"
+                    />
+                    <StatCard
+                        title="Departments"
+                        value={departments.length}
+                        icon={Building2}
                         color="purple"
                     />
+                    <StatCard
+                        title="Admin Staff"
+                        value={adminCount}
+                        icon={Shield}
+                        color="slate"
+                    />
                 </div>
+
+                {/* Teacher Appraisal Summary */}
+                <Card>
+                    <Card.Header>
+                        <Card.Title className="flex items-center gap-2">
+                            <FileText size={20} />
+                            Teacher Appraisal Summary
+                        </Card.Title>
+                    </Card.Header>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="p-4 bg-slate-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-slate-600">{teacherCount - allAppraisals.filter(a => a.status !== 'NOT_STARTED').length}</p>
+                            <p className="text-sm text-slate-500">Not Started</p>
+                        </div>
+                        <div className="p-4 bg-amber-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-amber-600">{allAppraisals.filter(a => a.status === 'DRAFT').length}</p>
+                            <p className="text-sm text-slate-500">Draft</p>
+                        </div>
+                        <div className="p-4 bg-blue-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-blue-600">{allAppraisals.filter(a => ['SUBMITTED', 'HOD_REVIEWED', 'IQAC_REVIEWED'].includes(a.status)).length}</p>
+                            <p className="text-sm text-slate-500">In Review</p>
+                        </div>
+                        <div className="p-4 bg-emerald-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-emerald-600">{allAppraisals.filter(a => a.status === 'PRINCIPAL_REVIEWED').length}</p>
+                            <p className="text-sm text-slate-500">Completed</p>
+                        </div>
+                        <div className="p-4 bg-purple-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-purple-600">{Math.round((allAppraisals.filter(a => a.status === 'PRINCIPAL_REVIEWED').length / teacherCount) * 100) || 0}%</p>
+                            <p className="text-sm text-slate-500">Completion Rate</p>
+                        </div>
+                    </div>
+                </Card>
 
                 {/* Filters & Add Button */}
                 <Card>

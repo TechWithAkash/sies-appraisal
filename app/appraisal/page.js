@@ -22,10 +22,11 @@ import {
     Send,
     FileText,
     AlertCircle,
+    Eye,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
-import { ConfirmModal } from '@/components/ui/Modal';
+import { useState, useEffect } from 'react';
+import { ConfirmModal, SuccessModal } from '@/components/ui/Modal';
 
 export default function AppraisalPage() {
     const { user } = useAuth();
@@ -34,19 +35,34 @@ export default function AppraisalPage() {
         getFullAppraisalData,
         createAppraisal,
         submitAppraisal,
-        appraisalCycles
+        appraisalCycles,
+        recalculateTotals
     } = useAppraisal();
 
     const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [appraisalCreated, setAppraisalCreated] = useState(false);
 
     const currentCycle = appraisalCycles.find(c => c.isOpen);
     let appraisal = user ? getCurrentAppraisal(user.id) : null;
 
-    // Create new appraisal if none exists for current cycle
-    if (!appraisal && currentCycle) {
-        // In real app, this would be an API call
-    }
+    // Auto-create appraisal if none exists for current cycle
+    useEffect(() => {
+        if (!appraisal && currentCycle && user && !appraisalCreated) {
+            const newAppraisal = createAppraisal(user.id, currentCycle.id);
+            if (newAppraisal) {
+                setAppraisalCreated(true);
+            }
+        }
+    }, [appraisal, currentCycle, user, createAppraisal, appraisalCreated]);
+
+    // Recalculate totals on page load
+    useEffect(() => {
+        if (appraisal) {
+            recalculateTotals(appraisal.id);
+        }
+    }, []);
 
     const fullData = appraisal ? getFullAppraisalData(appraisal.id) : null;
 
@@ -118,6 +134,7 @@ export default function AppraisalPage() {
         try {
             submitAppraisal(appraisal.id);
             setShowSubmitModal(false);
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Failed to submit:', error);
         } finally {
@@ -133,12 +150,38 @@ export default function AppraisalPage() {
             />
 
             <div className="p-6 space-y-6">
+                {/* Rejection Alert - Show when appraisal was sent back */}
+                {appraisal?.rejectionReason && appraisal?.status === 'DRAFT' && (
+                    <Alert variant="warning" title="Appraisal Sent Back for Revision">
+                        <div className="space-y-2">
+                            <p>
+                                <strong>Rejected by:</strong> {appraisal?.rejectedBy || 'Reviewer'} on {appraisal?.rejectedAt}
+                            </p>
+                            <p>
+                                <strong>Reason:</strong> {appraisal?.rejectionReason}
+                            </p>
+                            <p className="text-sm mt-2">
+                                Please review the feedback above and make the necessary corrections before resubmitting.
+                            </p>
+                        </div>
+                    </Alert>
+                )}
+
                 {/* Status Alert */}
                 {isReadOnly && (
                     <Alert variant="info" title="Appraisal Status">
-                        Your appraisal has been submitted and is currently in{' '}
-                        <strong>{appraisal?.status?.replace('_', ' ')}</strong> status.
-                        {appraisal?.status === 'APPROVED' && ' Congratulations!'}
+                        <div className="flex items-center justify-between">
+                            <span>
+                                Your appraisal has been submitted and is currently in{' '}
+                                <strong>{appraisal?.status?.replace('_', ' ')}</strong> status.
+                                {appraisal?.status === 'PRINCIPAL_REVIEWED' && ' Congratulations!'}
+                            </span>
+                            <Link href={`/appraisal/view`}>
+                                <Button variant="outline" size="sm" icon={Eye}>
+                                    View Submitted Data
+                                </Button>
+                            </Link>
+                        </div>
                     </Alert>
                 )}
 
@@ -341,6 +384,13 @@ export default function AppraisalPage() {
                 confirmText="Submit"
                 variant="primary"
                 loading={submitting}
+            />
+
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                title="Appraisal Submitted!"
+                message="Your appraisal has been successfully submitted. It will now be reviewed by your HOD. You can track the review progress on this page."
             />
         </DashboardLayout>
     );

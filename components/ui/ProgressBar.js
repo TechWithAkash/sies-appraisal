@@ -23,6 +23,8 @@ export default function ProgressBar({
         amber: 'bg-amber-500',
         red: 'bg-red-500',
         green: 'bg-green-500',
+        indigo: 'bg-indigo-500',
+        purple: 'bg-purple-500',
     };
 
     return (

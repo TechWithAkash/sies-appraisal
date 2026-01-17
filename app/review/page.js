@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useAppraisal } from '@/lib/context/AppraisalContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -22,7 +23,6 @@ import {
     Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { appraisals } from '@/lib/data/mockData';
 
 const statusConfig = {
     DRAFT: { label: 'Draft', variant: 'secondary' },
@@ -35,10 +35,19 @@ const statusConfig = {
 export default function ReviewListPage() {
     const { user } = useAuth();
     const { getAllAppraisals } = useAppraisal();
+    const searchParams = useSearchParams();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
+
+    // Initialize department filter from URL
+    useEffect(() => {
+        const deptFromUrl = searchParams.get('department');
+        if (deptFromUrl) {
+            setDepartmentFilter(deptFromUrl);
+        }
+    }, [searchParams]);
 
     // Get appraisals based on user role
     const filteredAppraisals = useMemo(() => {
@@ -154,8 +163,8 @@ export default function ReviewListPage() {
         {
             key: 'selfScore',
             label: 'Self Score',
-            render: (value) => (
-                <span className="font-semibold text-slate-900">{value || 0}</span>
+            render: (value, row) => (
+                <span className="font-semibold text-slate-900">{value || row.grandTotal || 0}</span>
             ),
         },
         {

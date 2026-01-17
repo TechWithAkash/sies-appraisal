@@ -11,13 +11,13 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Alert from '@/components/ui/Alert';
-import Modal from '@/components/ui/Modal';
+import Modal, { SuccessModal } from '@/components/ui/Modal';
 import ProgressBar from '@/components/ui/ProgressBar';
 import FileUpload, { FileAttachment } from '@/components/ui/FileUpload';
-import { 
-  Save, 
-  Plus, 
-  Trash2, 
+import {
+  Save,
+  Plus,
+  Trash2,
   Edit,
   ArrowLeft,
   CheckCircle,
@@ -79,11 +79,13 @@ const subsections = {
       { key: 'title', label: 'Book/Chapter Title', placeholder: 'Title', fullWidth: true, required: true },
       { key: 'publisher', label: 'Publisher', placeholder: 'e.g., Springer, Elsevier', required: true },
       { key: 'isbn', label: 'ISBN', placeholder: 'e.g., 978-3-030-12345-6', required: true },
-      { key: 'bookType', label: 'Type', type: 'select', required: true, options: [
-        { value: 'Authored Book', label: 'Authored Book' },
-        { value: 'Book Chapter', label: 'Book Chapter' },
-        { value: 'Edited Book', label: 'Edited Book' },
-      ]},
+      {
+        key: 'bookType', label: 'Type', type: 'select', required: true, options: [
+          { value: 'Authored Book', label: 'Authored Book' },
+          { value: 'Book Chapter', label: 'Book Chapter' },
+          { value: 'Edited Book', label: 'Edited Book' },
+        ]
+      },
       { key: 'authors', label: 'Authors', placeholder: 'Author names', required: true },
       { key: 'year', label: 'Year', type: 'number', placeholder: 'e.g., 2025', required: true },
       { key: 'chapterNumber', label: 'Chapter No. (if chapter)', placeholder: 'e.g., Chapter 5' },
@@ -126,10 +128,12 @@ const subsections = {
       { key: 'startDate', label: 'Start Date', type: 'date', required: true },
       { key: 'endDate', label: 'End Date', type: 'date' },
       { key: 'amount', label: 'Grant Amount (₹)', type: 'number', placeholder: 'Amount in rupees', required: true },
-      { key: 'status', label: 'Status', type: 'select', required: true, options: [
-        { value: 'Ongoing', label: 'Ongoing' },
-        { value: 'Completed', label: 'Completed' },
-      ]},
+      {
+        key: 'status', label: 'Status', type: 'select', required: true, options: [
+          { value: 'Ongoing', label: 'Ongoing' },
+          { value: 'Completed', label: 'Completed' },
+        ]
+      },
     ],
     displayFields: ['projectTitle', 'sponsoredBy', 'status'],
   },
@@ -164,11 +168,13 @@ const subsections = {
       { key: 'programName', label: 'Program Name', placeholder: 'Name of the FDP', fullWidth: true, required: true },
       { key: 'organizer', label: 'Organizer', placeholder: 'Organizing institution', required: true },
       { key: 'duration', label: 'Duration', placeholder: 'e.g., 5 days', required: true },
-      { key: 'role', label: 'Role', type: 'select', required: true, options: [
-        { value: 'Participant', label: 'Participant' },
-        { value: 'Resource Person', label: 'Resource Person' },
-        { value: 'Coordinator', label: 'Coordinator' },
-      ]},
+      {
+        key: 'role', label: 'Role', type: 'select', required: true, options: [
+          { value: 'Participant', label: 'Participant' },
+          { value: 'Resource Person', label: 'Resource Person' },
+          { value: 'Coordinator', label: 'Coordinator' },
+        ]
+      },
       { key: 'date', label: 'Date', type: 'date', required: true },
     ],
     displayFields: ['programName', 'organizer', 'role'],
@@ -185,19 +191,23 @@ const subsections = {
     fields: [
       { key: 'title', label: 'Paper/Event Title', placeholder: 'Title of paper or event', fullWidth: true, type: 'textarea', required: true },
       { key: 'eventName', label: 'Conference/Seminar Name', placeholder: 'Name of the event', required: true },
-      { key: 'level', label: 'Level', type: 'select', required: true, options: [
-        { value: 'International', label: 'International' },
-        { value: 'National', label: 'National' },
-        { value: 'State', label: 'State' },
-        { value: 'Regional', label: 'Regional' },
-      ]},
-      { key: 'role', label: 'Role', type: 'select', required: true, options: [
-        { value: 'Paper Presenter', label: 'Paper Presenter' },
-        { value: 'Resource Person', label: 'Resource Person' },
-        { value: 'Session Chair', label: 'Session Chair' },
-        { value: 'Organizer', label: 'Organizer' },
-        { value: 'Participant', label: 'Participant' },
-      ]},
+      {
+        key: 'level', label: 'Level', type: 'select', required: true, options: [
+          { value: 'International', label: 'International' },
+          { value: 'National', label: 'National' },
+          { value: 'State', label: 'State' },
+          { value: 'Regional', label: 'Regional' },
+        ]
+      },
+      {
+        key: 'role', label: 'Role', type: 'select', required: true, options: [
+          { value: 'Paper Presenter', label: 'Paper Presenter' },
+          { value: 'Resource Person', label: 'Resource Person' },
+          { value: 'Session Chair', label: 'Session Chair' },
+          { value: 'Organizer', label: 'Organizer' },
+          { value: 'Participant', label: 'Participant' },
+        ]
+      },
       { key: 'eventDate', label: 'Date', type: 'date', required: true },
       { key: 'location', label: 'Location', placeholder: 'City, Country', required: true },
     ],
@@ -215,11 +225,13 @@ const subsections = {
     fields: [
       { key: 'title', label: 'Patent Title', placeholder: 'Title of the patent', fullWidth: true, type: 'textarea', required: true },
       { key: 'patentNumber', label: 'Patent/Application Number', placeholder: 'e.g., 202121012345', required: true },
-      { key: 'status', label: 'Status', type: 'select', required: true, options: [
-        { value: 'Filed', label: 'Filed' },
-        { value: 'Published', label: 'Published' },
-        { value: 'Granted', label: 'Granted' },
-      ]},
+      {
+        key: 'status', label: 'Status', type: 'select', required: true, options: [
+          { value: 'Filed', label: 'Filed' },
+          { value: 'Published', label: 'Published' },
+          { value: 'Granted', label: 'Granted' },
+        ]
+      },
       { key: 'filingDate', label: 'Filing Date', type: 'date', required: true },
       { key: 'inventors', label: 'Inventors', placeholder: 'Names of inventors', required: true },
       { key: 'patentOffice', label: 'Patent Office', placeholder: 'e.g., Indian Patent Office' },
@@ -237,12 +249,14 @@ const subsections = {
     documentHelp: 'Upload certificate or official award letter',
     fields: [
       { key: 'awardName', label: 'Award Name', placeholder: 'Name of the award', fullWidth: true, required: true },
-      { key: 'level', label: 'Level', type: 'select', required: true, options: [
-        { value: 'International', label: 'International' },
-        { value: 'National', label: 'National' },
-        { value: 'State', label: 'State' },
-        { value: 'Institution', label: 'Institution' },
-      ]},
+      {
+        key: 'level', label: 'Level', type: 'select', required: true, options: [
+          { value: 'International', label: 'International' },
+          { value: 'National', label: 'National' },
+          { value: 'State', label: 'State' },
+          { value: 'Institution', label: 'Institution' },
+        ]
+      },
       { key: 'awardYear', label: 'Year', type: 'number', placeholder: 'e.g., 2025', required: true },
       { key: 'awardedBy', label: 'Awarded By', placeholder: 'Awarding organization', required: true },
       { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Brief description of the award' },
@@ -260,12 +274,14 @@ const subsections = {
     documentHelp: 'Upload screenshot of published content or platform acknowledgment',
     fields: [
       { key: 'title', label: 'Content Title', placeholder: 'Title of the content', fullWidth: true, required: true },
-      { key: 'contentType', label: 'Content Type', type: 'select', required: true, options: [
-        { value: 'Video Lecture', label: 'Video Lecture' },
-        { value: 'E-Book', label: 'E-Book' },
-        { value: 'MOOC Module', label: 'MOOC Module' },
-        { value: 'Online Course', label: 'Online Course' },
-      ]},
+      {
+        key: 'contentType', label: 'Content Type', type: 'select', required: true, options: [
+          { value: 'Video Lecture', label: 'Video Lecture' },
+          { value: 'E-Book', label: 'E-Book' },
+          { value: 'MOOC Module', label: 'MOOC Module' },
+          { value: 'Online Course', label: 'Online Course' },
+        ]
+      },
       { key: 'platform', label: 'Platform', placeholder: 'e.g., YouTube, NPTEL, Coursera', required: true },
       { key: 'contentLink', label: 'Link/URL', placeholder: 'URL to the content', required: true },
       { key: 'description', label: 'Description', placeholder: 'Brief description', type: 'textarea' },
@@ -287,10 +303,12 @@ const subsections = {
       { key: 'duration', label: 'Duration', placeholder: 'e.g., 8 weeks', required: true },
       { key: 'completionDate', label: 'Completion Date', type: 'date', required: true },
       { key: 'certificateId', label: 'Certificate ID', placeholder: 'Certificate verification ID' },
-      { key: 'certificateAvailable', label: 'Certificate Obtained', type: 'select', required: true, options: [
-        { value: 'Yes', label: 'Yes' },
-        { value: 'No', label: 'No' },
-      ]},
+      {
+        key: 'certificateAvailable', label: 'Certificate Obtained', type: 'select', required: true, options: [
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]
+      },
     ],
     displayFields: ['courseName', 'platform', 'duration'],
   },
@@ -305,20 +323,24 @@ const subsections = {
     documentHelp: 'Upload university guide allotment letter or completion certificate',
     fields: [
       { key: 'studentName', label: 'Student Name', placeholder: 'Name of the student', required: true },
-      { key: 'level', label: 'Level', type: 'select', required: true, options: [
-        { value: 'Ph.D.', label: 'Ph.D.' },
-        { value: 'M.Tech', label: 'M.Tech' },
-        { value: 'M.Phil', label: 'M.Phil' },
-        { value: 'M.E.', label: 'M.E.' },
-      ]},
+      {
+        key: 'level', label: 'Level', type: 'select', required: true, options: [
+          { value: 'Ph.D.', label: 'Ph.D.' },
+          { value: 'M.Tech', label: 'M.Tech' },
+          { value: 'M.Phil', label: 'M.Phil' },
+          { value: 'M.E.', label: 'M.E.' },
+        ]
+      },
       { key: 'topic', label: 'Research Topic', placeholder: 'Title of the thesis', fullWidth: true, type: 'textarea', required: true },
       { key: 'university', label: 'University', placeholder: 'Affiliated university', required: true },
       { key: 'registrationNumber', label: 'Registration Number', placeholder: 'Student registration number' },
       { key: 'year', label: 'Year', type: 'number', placeholder: 'e.g., 2025', required: true },
-      { key: 'status', label: 'Status', type: 'select', required: true, options: [
-        { value: 'Ongoing', label: 'Ongoing' },
-        { value: 'Completed', label: 'Completed' },
-      ]},
+      {
+        key: 'status', label: 'Status', type: 'select', required: true, options: [
+          { value: 'Ongoing', label: 'Ongoing' },
+          { value: 'Completed', label: 'Completed' },
+        ]
+      },
     ],
     displayFields: ['studentName', 'level', 'topic'],
   },
@@ -365,8 +387,8 @@ function EntryCard({ item, config, onEdit, onDelete, onView, disabled }) {
               const value = item[field];
               if (!value) return null;
               return (
-                <span 
-                  key={field} 
+                <span
+                  key={field}
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${colorClasses.badge}`}
                 >
                   {value.toString().length > 25 ? value.toString().substring(0, 25) + '...' : value}
@@ -374,12 +396,12 @@ function EntryCard({ item, config, onEdit, onDelete, onView, disabled }) {
               );
             })}
           </div>
-          
+
           {/* Document Attachment Badge */}
           {item.document ? (
             <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 font-medium">
               <Paperclip size={14} />
-              <span className="truncate max-w-[180px]">{item.document.name}</span>
+              <span className="truncate max-w-45">{item.document.name}</span>
               <CheckCircle size={14} />
             </div>
           ) : config.documentRequired ? (
@@ -396,7 +418,7 @@ function EntryCard({ item, config, onEdit, onDelete, onView, disabled }) {
           </div>
         </div>
       </div>
-      
+
       <div className="mt-4 pt-4 border-t border-slate-200/60 flex items-center justify-between">
         <button
           onClick={() => onView(item)}
@@ -431,7 +453,7 @@ function EntryCard({ item, config, onEdit, onDelete, onView, disabled }) {
 // View Details Modal
 function ViewDetailsModal({ isOpen, onClose, item, config }) {
   if (!item || !config) return null;
-  
+
   const colorClasses = getColorClasses(config.color);
   const Icon = config.icon;
 
@@ -448,13 +470,13 @@ function ViewDetailsModal({ isOpen, onClose, item, config }) {
             <p className={`text-3xl font-bold ${colorClasses.text}`}>{item.selfMarks || 0} <span className="text-base font-normal">points</span></p>
           </div>
         </div>
-        
+
         {/* Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {config.fields.map(field => {
             const value = item[field.key];
             if (!value && value !== 0) return null;
-            
+
             return (
               <div key={field.key} className={field.fullWidth ? 'md:col-span-2' : ''}>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
@@ -484,9 +506,9 @@ function ViewDetailsModal({ isOpen, onClose, item, config }) {
                   Uploaded on {new Date(item.document.uploadedAt).toLocaleDateString()}
                 </p>
               </div>
-              <Button 
-                variant="secondary" 
-                size="sm" 
+              <Button
+                variant="secondary"
+                size="sm"
                 icon={Eye}
                 onClick={() => window.open(item.document.url, '_blank')}
               >
@@ -505,7 +527,7 @@ function EntryFormModal({ isOpen, onClose, onSave, item, config, isEditing, sect
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  
+
   useEffect(() => {
     if (isOpen) {
       if (item) {
@@ -537,7 +559,7 @@ function EntryFormModal({ isOpen, onClose, onSave, item, config, isEditing, sect
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Validate all fields
     config.fields.forEach(field => {
       const error = validateField(field.key, formData[field.key], field);
@@ -677,7 +699,7 @@ function EntryFormModal({ isOpen, onClose, onSave, item, config, isEditing, sect
               {config.documentRequired && <span className="ml-1 text-red-500">*</span>}
             </label>
           </div>
-          
+
           <FileUpload
             value={formData.document}
             onChange={(doc) => {
@@ -714,7 +736,7 @@ function EntryFormModal({ isOpen, onClose, onSave, item, config, isEditing, sect
               onChange={(e) => setFormData({ ...formData, selfMarks: e.target.value })}
               onBlur={() => handleBlur('selfMarks')}
               placeholder="Enter marks"
-              className="max-w-[150px]"
+              className="max-w-36"
               error={touched.selfMarks && errors.selfMarks}
             />
             <p className="text-sm text-slate-500">
@@ -786,7 +808,7 @@ function Subsection({ sectionKey, config, data, onChange, disabled, maxMarks }) 
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6 lg:gap-8">
             {/* Stats Display */}
             <div className="text-center lg:text-right">
@@ -810,8 +832,8 @@ function Subsection({ sectionKey, config, data, onChange, disabled, maxMarks }) 
 
             {/* Add Button */}
             {!disabled && (
-              <Button 
-                icon={Plus} 
+              <Button
+                icon={Plus}
                 onClick={() => { setEditingItem(null); setShowAddModal(true); }}
                 size="lg"
               >
@@ -820,7 +842,7 @@ function Subsection({ sectionKey, config, data, onChange, disabled, maxMarks }) 
             )}
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="mt-6">
           <ProgressBar value={cappedTotal} max={maxMarks} showLabel={false} />
@@ -844,7 +866,7 @@ function Subsection({ sectionKey, config, data, onChange, disabled, maxMarks }) 
             </p>
           )}
           {!disabled && (
-            <Button 
+            <Button
               icon={Plus}
               onClick={() => { setEditingItem(null); setShowAddModal(true); }}
             >
@@ -916,12 +938,15 @@ export default function PartBPage() {
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (fullData?.partB) {
+    if (fullData?.partB && !dataLoaded) {
       setPartBData(prev => ({ ...prev, ...fullData.partB }));
+      setDataLoaded(true);
     }
-  }, [fullData]);
+  }, [fullData, dataLoaded]);
 
   // Load sample data for prototype
   const loadSampleData = () => {
@@ -1038,8 +1063,7 @@ export default function PartBPage() {
         savePartBSection(appraisal.id, section, records);
       });
       recalculateTotals(appraisal.id);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to save:', error);
     } finally {
@@ -1069,11 +1093,11 @@ export default function PartBPage() {
 
   return (
     <DashboardLayout>
-      <Header 
+      <Header
         title="Part B - Research & Academic Contributions"
         subtitle="Maximum 120 marks across all subsections"
       />
-      
+
       <div className="p-6 space-y-6">
         {/* Top Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1082,20 +1106,9 @@ export default function PartBPage() {
             Back to Appraisal Overview
           </Link>
           {!isReadOnly && (
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={loadSampleData} size="sm">
-                Load Sample Data
-              </Button>
-              {saved && (
-                <span className="flex items-center gap-2 text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1.5 rounded-full">
-                  <CheckCircle size={16} />
-                  All changes saved!
-                </span>
-              )}
-              <Button icon={Save} onClick={handleSave} loading={saving} size="lg">
-                Save All Changes
-              </Button>
-            </div>
+            <Button variant="outline" onClick={loadSampleData} size="sm">
+              Load Sample Data
+            </Button>
           )}
         </div>
 
@@ -1111,7 +1124,7 @@ export default function PartBPage() {
             <div>
               <p className="font-semibold">Document Upload Reminder</p>
               <p className="text-sm mt-1">
-                {totalWithDocs} of {totalEntries} entries have supporting documents uploaded ({docCompliance}% complete). 
+                {totalWithDocs} of {totalEntries} entries have supporting documents uploaded ({docCompliance}% complete).
                 Please upload documents for all entries before submission.
               </p>
             </div>
@@ -1119,7 +1132,7 @@ export default function PartBPage() {
         )}
 
         {/* Total Score Card */}
-        <Card className="bg-linear-to-r from-emerald-50 to-teal-50 border-emerald-200 border-2 !p-6">
+        <Card className="bg-linear-to-r from-emerald-50 to-teal-50 border-emerald-200 border-2 p-6!">
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-900">Part B Total Score</h3>
@@ -1173,11 +1186,10 @@ export default function PartBPage() {
                     <button
                       key={key}
                       onClick={() => setActiveSection(key)}
-                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all mb-1 ${
-                        isActive 
+                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all mb-1 ${isActive
                           ? `${colorClasses.bg} border-2 ${colorClasses.border} shadow-sm`
                           : 'hover:bg-slate-50 border-2 border-transparent'
-                      }`}
+                        }`}
                     >
                       <div className={`shrink-0 rounded-lg p-2 ${isActive ? colorClasses.badge : 'bg-slate-100 text-slate-400'}`}>
                         <Icon size={18} />
@@ -1223,6 +1235,26 @@ export default function PartBPage() {
             />
           </div>
         </div>
+
+        {/* Bottom Navigation */}
+        {!isReadOnly && (
+          <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-lg border sticky bottom-4">
+            <Button onClick={handleSave} loading={saving} className="bg-emerald-600 hover:bg-emerald-700 px-8" size="lg">
+              <Save size={16} className="mr-2" />
+              Save Part B
+            </Button>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Part B Saved Successfully!"
+          message="Your research and academic contributions have been saved. You can now proceed to Part C for Administrative Contributions."
+          buttonText="Continue"
+          redirectUrl="/appraisal"
+        />
       </div>
     </DashboardLayout>
   );

@@ -444,7 +444,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-amber-800">Prototype Mode</p>
               <p className="text-sm text-amber-700">

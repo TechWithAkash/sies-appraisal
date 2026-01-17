@@ -56,6 +56,7 @@ const roleNavItems = {
         { name: 'Appraisal Cycles', href: '/admin/cycles', icon: Calendar },
         { name: 'User Management', href: '/admin/users', icon: Users },
         { name: 'All Appraisals', href: '/admin/appraisals', icon: FileText },
+        { name: 'All Departments', href: '/departments', icon: Building2 },
         { name: 'Reports', href: '/reports', icon: BarChart3 },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ],

@@ -24,21 +24,24 @@ import {
     AlertTriangle,
     BarChart3,
     TrendingUp,
+    Users,
+    ArrowRight,
+    Building2,
 } from 'lucide-react';
 import Link from 'next/link';
 
 const statusConfig = {
     DRAFT: { label: 'Draft', variant: 'secondary' },
-    SUBMITTED: { label: 'Submitted', variant: 'warning' },
-    HOD_REVIEWED: { label: 'HOD Reviewed', variant: 'info' },
-    IQAC_REVIEWED: { label: 'IQAC Reviewed', variant: 'info' },
+    SUBMITTED: { label: 'With HOD', variant: 'warning' },
+    HOD_REVIEWED: { label: 'With IQAC', variant: 'info' },
+    IQAC_REVIEWED: { label: 'With Principal', variant: 'purple' },
     PRINCIPAL_REVIEWED: { label: 'Completed', variant: 'success' },
 };
 
 export default function AdminAppraisalsPage() {
-    const { getAllAppraisals } = useAppraisal();
+    const { getAllAppraisalsWithDetails, appraisalCycles } = useAppraisal();
 
-    const allAppraisals = getAllAppraisals();
+    const allAppraisals = getAllAppraisalsWithDetails();
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
@@ -51,8 +54,11 @@ export default function AdminAppraisalsPage() {
             const query = searchQuery.toLowerCase();
             list = list.filter(a =>
                 a.teacherName?.toLowerCase().includes(query) ||
+                a.teacher?.name?.toLowerCase().includes(query) ||
                 a.teacherEmail?.toLowerCase().includes(query) ||
-                a.department?.toLowerCase().includes(query)
+                a.teacher?.email?.toLowerCase().includes(query) ||
+                a.department?.toLowerCase().includes(query) ||
+                a.teacher?.department?.toLowerCase().includes(query)
             );
         }
 
@@ -61,46 +67,47 @@ export default function AdminAppraisalsPage() {
         }
 
         if (departmentFilter) {
-            list = list.filter(a => a.department === departmentFilter);
+            list = list.filter(a => (a.department || a.teacher?.department) === departmentFilter);
         }
 
         if (cycleFilter) {
-            list = list.filter(a => a.cycleId === cycleFilter);
+            list = list.filter(a => a.cycleId === parseInt(cycleFilter));
         }
 
         return list;
     }, [allAppraisals, searchQuery, statusFilter, departmentFilter, cycleFilter]);
 
     // Get unique values for filters
-    const departments = [...new Set(allAppraisals.map(a => a.department).filter(Boolean))];
-    const cycles = [...new Set(allAppraisals.map(a => a.cycleId).filter(Boolean))];
+    const departments = [...new Set(allAppraisals.map(a => a.department || a.teacher?.department).filter(Boolean))];
 
-    // Stats
-    const totalAppraisals = allAppraisals.length;
-    const completedAppraisals = allAppraisals.filter(a => a.status === 'PRINCIPAL_REVIEWED').length;
-    const inProgressAppraisals = allAppraisals.filter(a =>
-        ['SUBMITTED', 'HOD_REVIEWED', 'IQAC_REVIEWED'].includes(a.status)
-    ).length;
-    const draftAppraisals = allAppraisals.filter(a => a.status === 'DRAFT').length;
+    // Workflow Stats
+    const workflowStats = useMemo(() => ({
+        draft: allAppraisals.filter(a => a.status === 'DRAFT').length,
+        withHOD: allAppraisals.filter(a => a.status === 'SUBMITTED').length,
+        withIQAC: allAppraisals.filter(a => a.status === 'HOD_REVIEWED').length,
+        withPrincipal: allAppraisals.filter(a => a.status === 'IQAC_REVIEWED').length,
+        completed: allAppraisals.filter(a => a.status === 'PRINCIPAL_REVIEWED').length,
+    }), [allAppraisals]);
 
     // Calculate average scores
-    const completedWithScores = allAppraisals.filter(a => a.finalScore && a.status === 'PRINCIPAL_REVIEWED');
+    const completedWithScores = allAppraisals.filter(a => (a.finalScore || a.grandTotal) && a.status === 'PRINCIPAL_REVIEWED');
     const averageScore = completedWithScores.length > 0
-        ? Math.round(completedWithScores.reduce((sum, a) => sum + a.finalScore, 0) / completedWithScores.length)
+        ? Math.round(completedWithScores.reduce((sum, a) => sum + (a.finalScore || a.grandTotal), 0) / completedWithScores.length)
         : 0;
 
     // Department-wise stats
     const departmentStats = useMemo(() => {
         const stats = {};
         allAppraisals.forEach(a => {
-            if (!stats[a.department]) {
-                stats[a.department] = { total: 0, completed: 0, avgScore: 0, scores: [] };
+            const dept = a.department || a.teacher?.department || 'Unknown';
+            if (!stats[dept]) {
+                stats[dept] = { total: 0, completed: 0, avgScore: 0, scores: [] };
             }
-            stats[a.department].total++;
+            stats[dept].total++;
             if (a.status === 'PRINCIPAL_REVIEWED') {
-                stats[a.department].completed++;
-                if (a.finalScore) {
-                    stats[a.department].scores.push(a.finalScore);
+                stats[dept].completed++;
+                if (a.finalScore || a.grandTotal) {
+                    stats[dept].scores.push(a.finalScore || a.grandTotal);
                 }
             }
         });
@@ -122,33 +129,29 @@ export default function AdminAppraisalsPage() {
             label: 'Teacher',
             render: (_, row) => (
                 <div>
-                    <p className="font-medium text-slate-900">{row.teacherName}</p>
-                    <p className="text-sm text-slate-500">{row.teacherEmail}</p>
+                    <p className="font-medium text-slate-900">{row.teacher?.name || row.teacherName}</p>
+                    <p className="text-sm text-slate-500">{row.teacher?.email || row.teacherEmail}</p>
                 </div>
             ),
         },
         {
             key: 'department',
             label: 'Department',
+            render: (val, row) => val || row.teacher?.department || '—',
         },
         {
-            key: 'cycleName',
-            label: 'Cycle',
-            render: (value) => value || 'Current Cycle',
-        },
-        {
-            key: 'selfScore',
+            key: 'grandTotal',
             label: 'Self Score',
-            render: (value) => (
-                <span className="font-semibold text-slate-900">{value || 0}</span>
+            render: (value, row) => (
+                <span className="font-semibold text-slate-900">{value || row.selfScore || 0}/250</span>
             ),
         },
         {
             key: 'finalScore',
             label: 'Final Score',
-            render: (value) => (
+            render: (value, row) => (
                 <span className={`font-semibold ${value ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    {value || '—'}
+                    {value ? `${value}/250` : '—'}
                 </span>
             ),
         },
@@ -158,6 +161,31 @@ export default function AdminAppraisalsPage() {
             render: (value) => {
                 const config = statusConfig[value] || { label: value, variant: 'secondary' };
                 return <Badge variant={config.variant}>{config.label}</Badge>;
+            },
+        },
+        {
+            key: 'workflow',
+            label: 'Review Stage',
+            render: (_, row) => {
+                const stages = ['SUBMITTED', 'HOD_REVIEWED', 'IQAC_REVIEWED', 'PRINCIPAL_REVIEWED'];
+                const currentIndex = stages.indexOf(row.status);
+                if (row.status === 'DRAFT') return <span className="text-slate-400 text-sm">Not submitted</span>;
+                return (
+                    <div className="flex items-center gap-1">
+                        {['H', 'I', 'P'].map((letter, i) => (
+                            <div 
+                                key={letter}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                    currentIndex > i ? 'bg-emerald-500 text-white' :
+                                    currentIndex === i ? 'bg-amber-500 text-white' :
+                                    'bg-slate-200 text-slate-500'
+                                }`}
+                            >
+                                {letter}
+                            </div>
+                        ))}
+                    </div>
+                );
             },
         },
         {
@@ -175,14 +203,17 @@ export default function AdminAppraisalsPage() {
 
     const handleExport = () => {
         // Create CSV content
-        const headers = ['Teacher Name', 'Email', 'Department', 'Status', 'Self Score', 'Final Score'];
+        const headers = ['Teacher Name', 'Email', 'Department', 'Status', 'Self Score', 'Final Score', 'HOD Reviewed', 'IQAC Reviewed', 'Principal Approved'];
         const rows = filteredAppraisals.map(a => [
-            a.teacherName,
-            a.teacherEmail,
-            a.department,
+            a.teacher?.name || a.teacherName,
+            a.teacher?.email || a.teacherEmail,
+            a.department || a.teacher?.department,
             statusConfig[a.status]?.label || a.status,
-            a.selfScore || 0,
+            a.grandTotal || a.selfScore || 0,
             a.finalScore || '',
+            a.hodReviewedAt || a.hodReview?.reviewedAt || '',
+            a.iqacApprovedAt || a.iqacReview?.reviewedAt || '',
+            a.principalApprovedAt || a.principalReview?.reviewedAt || '',
         ]);
 
         const csvContent = [
@@ -208,36 +239,60 @@ export default function AdminAppraisalsPage() {
             />
 
             <div className="p-6 space-y-6">
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {/* Workflow Pipeline Stats */}
+                <Card>
+                    <Card.Header>
+                        <Card.Title className="flex items-center gap-2">
+                            <BarChart3 size={20} />
+                            Workflow Pipeline
+                        </Card.Title>
+                    </Card.Header>
+                    <div className="flex items-center justify-between gap-2">
+                        {[
+                            { label: 'Draft', count: workflowStats.draft, bgColor: 'bg-slate-100', textColor: 'text-slate-700' },
+                            { label: 'With HOD', count: workflowStats.withHOD, bgColor: 'bg-amber-100', textColor: 'text-amber-700' },
+                            { label: 'With IQAC', count: workflowStats.withIQAC, bgColor: 'bg-purple-100', textColor: 'text-purple-700' },
+                            { label: 'With Principal', count: workflowStats.withPrincipal, bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
+                            { label: 'Completed', count: workflowStats.completed, bgColor: 'bg-emerald-100', textColor: 'text-emerald-700' },
+                        ].map((stage, i, arr) => (
+                            <div key={stage.label} className="flex items-center flex-1">
+                                <div className={`flex-1 text-center p-4 rounded-lg ${stage.bgColor}`}>
+                                    <p className={`text-2xl font-bold ${stage.textColor}`}>{stage.count}</p>
+                                    <p className={`text-xs mt-1 ${stage.textColor}`}>{stage.label}</p>
+                                </div>
+                                {i < arr.length - 1 && (
+                                    <ArrowRight size={16} className="mx-1 text-slate-400 shrink-0" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <StatCard
                         title="Total Appraisals"
-                        value={totalAppraisals}
+                        value={allAppraisals.length}
                         icon={FileText}
+                        color="blue"
                     />
                     <StatCard
-                        title="Completed"
-                        value={completedAppraisals}
+                        title="Completion Rate"
+                        value={`${allAppraisals.length ? Math.round((workflowStats.completed / allAppraisals.length) * 100) : 0}%`}
                         icon={CheckCircle}
                         color="emerald"
                     />
                     <StatCard
-                        title="In Progress"
-                        value={inProgressAppraisals}
+                        title="Pending Review"
+                        value={workflowStats.withHOD + workflowStats.withIQAC + workflowStats.withPrincipal}
                         icon={Clock}
                         color="amber"
                     />
                     <StatCard
-                        title="Draft"
-                        value={draftAppraisals}
-                        icon={AlertTriangle}
-                        color="purple"
-                    />
-                    <StatCard
                         title="Average Score"
-                        value={averageScore}
+                        value={averageScore > 0 ? `${averageScore}/250` : 'N/A'}
                         icon={TrendingUp}
-                        color="blue"
+                        color="purple"
                     />
                 </div>
 
@@ -297,9 +352,9 @@ export default function AdminAppraisalsPage() {
                                 options={[
                                     { value: '', label: 'All Statuses' },
                                     { value: 'DRAFT', label: 'Draft' },
-                                    { value: 'SUBMITTED', label: 'Submitted' },
-                                    { value: 'HOD_REVIEWED', label: 'HOD Reviewed' },
-                                    { value: 'IQAC_REVIEWED', label: 'IQAC Reviewed' },
+                                    { value: 'SUBMITTED', label: 'With HOD' },
+                                    { value: 'HOD_REVIEWED', label: 'With IQAC' },
+                                    { value: 'IQAC_REVIEWED', label: 'With Principal' },
                                     { value: 'PRINCIPAL_REVIEWED', label: 'Completed' },
                                 ]}
                             />
@@ -311,6 +366,16 @@ export default function AdminAppraisalsPage() {
                                 options={[
                                     { value: '', label: 'All Departments' },
                                     ...departments.map(d => ({ value: d, label: d })),
+                                ]}
+                            />
+                        </div>
+                        <div className="w-full md:w-40">
+                            <Select
+                                value={cycleFilter}
+                                onChange={(e) => setCycleFilter(e.target.value)}
+                                options={[
+                                    { value: '', label: 'All Cycles' },
+                                    ...appraisalCycles.map(c => ({ value: c.id.toString(), label: c.academicYear })),
                                 ]}
                             />
                         </div>

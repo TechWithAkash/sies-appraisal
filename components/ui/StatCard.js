@@ -38,6 +38,16 @@ export default function StatCard({
             icon: 'bg-red-100 text-red-600',
             accent: 'text-red-600',
         },
+        indigo: {
+            bg: 'bg-indigo-50',
+            icon: 'bg-indigo-100 text-indigo-600',
+            accent: 'text-indigo-600',
+        },
+        slate: {
+            bg: 'bg-slate-50',
+            icon: 'bg-slate-100 text-slate-600',
+            accent: 'text-slate-600',
+        },
     };
 
     const colorConfig = colors[color];

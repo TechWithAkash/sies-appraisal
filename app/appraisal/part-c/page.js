@@ -11,7 +11,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Alert from '@/components/ui/Alert';
-import Modal from '@/components/ui/Modal';
+import Modal, { SuccessModal } from '@/components/ui/Modal';
 import FileUpload, { FileAttachment } from '@/components/ui/FileUpload';
 import ProgressBar from '@/components/ui/ProgressBar';
 import {
@@ -141,7 +141,7 @@ function SectionCard({ title, description, icon: Icon, color, children, score, m
 // Committee Role Card
 function CommitteeRoleCard({ role, onEdit, onDelete, onDocumentChange, disabled }) {
   const hasDocument = !!role.document;
-  
+
   return (
     <div className={`p-4 rounded-xl border-2 ${hasDocument ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'}`}>
       <div className="flex items-start justify-between mb-3">
@@ -165,7 +165,7 @@ function CommitteeRoleCard({ role, onEdit, onDelete, onDocumentChange, disabled 
           )}
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-2 text-sm mb-3">
         <div>
           <span className="text-slate-500">From:</span>{' '}
@@ -189,10 +189,10 @@ function CommitteeRoleCard({ role, onEdit, onDelete, onDocumentChange, disabled 
             Appointment/Nomination Letter <span className="text-red-500">*</span>
           </span>
         </div>
-        
+
         {role.document ? (
-          <FileAttachment 
-            file={role.document} 
+          <FileAttachment
+            file={role.document}
             onRemove={!disabled ? () => onDocumentChange(role.id, null) : undefined}
             disabled={disabled}
           />
@@ -214,7 +214,7 @@ function CommitteeRoleCard({ role, onEdit, onDelete, onDocumentChange, disabled 
 // Professional Body Card
 function ProfessionalBodyCard({ body, onEdit, onDelete, onDocumentChange, disabled }) {
   const hasDocument = !!body.document;
-  
+
   return (
     <div className={`p-4 rounded-xl border-2 ${hasDocument ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'}`}>
       <div className="flex items-start justify-between mb-3">
@@ -238,7 +238,7 @@ function ProfessionalBodyCard({ body, onEdit, onDelete, onDocumentChange, disabl
           )}
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-2 text-sm mb-3">
         <div>
           <span className="text-slate-500">Member ID:</span>{' '}
@@ -260,10 +260,10 @@ function ProfessionalBodyCard({ body, onEdit, onDelete, onDocumentChange, disabl
             Membership Certificate <span className="text-red-500">*</span>
           </span>
         </div>
-        
+
         {body.document ? (
-          <FileAttachment 
-            file={body.document} 
+          <FileAttachment
+            file={body.document}
             onRemove={!disabled ? () => onDocumentChange(body.id, null) : undefined}
             disabled={disabled}
           />
@@ -329,7 +329,7 @@ function CommitteeRoleModal({ isOpen, onClose, onSave, role, isEditing }) {
       newErrors.selfMarks = `Maximum ${PART_C_CAPS.committeeRoles.max} marks allowed`;
     }
     if (!formData.document) newErrors.document = 'Please upload appointment/nomination letter as proof';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -498,7 +498,7 @@ function ProfessionalBodyModal({ isOpen, onClose, onSave, body, isEditing }) {
       newErrors.selfMarks = `Maximum ${PART_C_CAPS.professionalBodies.max} marks allowed`;
     }
     if (!formData.document) newErrors.document = 'Please upload membership certificate as proof';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -646,11 +646,13 @@ export default function PartCPage() {
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errors, setErrors] = useState({});
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Load data
+  // Load data - only run once when appraisal data is available
   useEffect(() => {
-    if (fullData?.partC) {
+    if (fullData?.partC && !dataLoaded) {
       if (fullData.partC.keyContribution) {
         setKeyContribution(fullData.partC.keyContribution);
       }
@@ -663,8 +665,9 @@ export default function PartCPage() {
       if (fullData.partC.studentFeedback) {
         setStudentFeedback(fullData.partC.studentFeedback);
       }
+      setDataLoaded(true);
     }
-  }, [fullData]);
+  }, [fullData, dataLoaded]);
 
   // Load sample data
   const loadSampleData = () => {
@@ -735,8 +738,7 @@ export default function PartCPage() {
       savePartCSection(appraisal.id, 'professionalBodies', professionalBodies);
       savePartCSection(appraisal.id, 'studentFeedback', studentFeedback);
       recalculateTotals(appraisal.id);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to save:', error);
     } finally {
@@ -755,7 +757,7 @@ export default function PartCPage() {
     PART_C_CAPS.professionalBodies.max
   );
   const feedbackScore = Math.min(parseFloat(studentFeedback.selfMarks) || 0, PART_C_CAPS.studentFeedback.max);
-  
+
   const totalScore = keyContributionScore + committeeScore + bodyScore + feedbackScore;
   const cappedTotal = Math.min(totalScore, PART_C_TOTAL_MAX);
 
@@ -779,24 +781,11 @@ export default function PartCPage() {
             <ArrowLeft size={18} />
             Back to Appraisal Overview
           </Link>
-          <div className="flex items-center gap-3">
-            {!isReadOnly && (
-              <Button variant="outline" onClick={loadSampleData} size="sm">
-                Load Sample Data
-              </Button>
-            )}
-            {saved && (
-              <span className="flex items-center gap-2 text-sm text-emerald-600 font-semibold bg-emerald-50 px-3 py-1.5 rounded-full">
-                <CheckCircle size={16} />
-                Saved!
-              </span>
-            )}
-            {!isReadOnly && (
-              <Button icon={Save} onClick={handleSave} loading={saving}>
-                Save All Changes
-              </Button>
-            )}
-          </div>
+          {!isReadOnly && (
+            <Button variant="outline" onClick={loadSampleData} size="sm">
+              Load Sample Data
+            </Button>
+          )}
         </div>
 
         {isReadOnly && (
@@ -1077,6 +1066,26 @@ export default function PartCPage() {
           onSave={handleSaveBody}
           body={editingBody}
           isEditing={!!editingBody}
+        />
+
+        {/* Bottom Navigation */}
+        {!isReadOnly && (
+          <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-lg border sticky bottom-4">
+            <Button onClick={handleSave} loading={saving} className="bg-emerald-600 hover:bg-emerald-700 px-8">
+              <Save size={16} className="mr-2" />
+              Save Part C
+            </Button>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Part C Saved Successfully!"
+          message="Your academic and administrative contributions have been saved. You can now proceed to Part D for Values & Ethics."
+          buttonText="Continue"
+          redirectUrl="/appraisal"
         />
       </div>
     </DashboardLayout>
