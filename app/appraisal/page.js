@@ -8,7 +8,6 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import { CircularProgress } from '@/components/ui/ProgressBar';
-import ProgressBar from '@/components/ui/ProgressBar';
 import Alert from '@/components/ui/Alert';
 import {
     User,
@@ -18,15 +17,83 @@ import {
     Target,
     CheckCircle,
     Clock,
-    ArrowRight,
     Send,
-    FileText,
-    AlertCircle,
     Eye,
+    ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { ConfirmModal, SuccessModal } from '@/components/ui/Modal';
+
+// Clean Section Card Component
+function SectionCard({ section, index, isReadOnly }) {
+    const Icon = section.icon;
+    const isScored = section.max !== null;
+    const progress = isScored ? Math.round((section.score / section.max) * 100) : 0;
+
+    return (
+        <Link href={section.href}>
+            <div className={`group relative bg-white rounded-2xl border-2 p-5 transition-all duration-200 hover:shadow-lg ${section.complete ? 'border-emerald-200 hover:border-emerald-300' : 'border-slate-200 hover:border-slate-300'
+                }`}>
+                {/* Step Number Badge */}
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                    {index + 1}
+                </div>
+
+                {/* Completion Badge */}
+                {section.complete && (
+                    <div className="absolute -top-2 -right-2">
+                        <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg">
+                            <CheckCircle size={16} />
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex items-start gap-4">
+                    {/* Icon */}
+                    <div className={`p-3 rounded-xl transition-colors ${section.complete ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'
+                        }`}>
+                        <Icon size={24} />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">{section.label}</span>
+                        </div>
+                        <h3 className="font-semibold text-slate-900 text-lg">{section.title}</h3>
+                        <p className="text-sm text-slate-500 mt-1">{section.description}</p>
+
+                        {/* Score Bar (for scored sections) */}
+                        {isScored && (
+                            <div className="mt-4">
+                                <div className="flex items-center justify-between text-sm mb-1.5">
+                                    <span className="text-slate-500">Your Score</span>
+                                    <span className="font-bold text-slate-900">{section.score}/{section.max}</span>
+                                </div>
+                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-300 ${progress >= 80 ? 'bg-emerald-500' :
+                                                progress >= 50 ? 'bg-blue-500' :
+                                                    progress >= 25 ? 'bg-amber-500' :
+                                                        'bg-slate-300'
+                                            }`}
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="self-center">
+                        <ChevronRight size={24} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+}
 
 export default function AppraisalPage() {
     const { user } = useAuth();
@@ -70,19 +137,19 @@ export default function AppraisalPage() {
         {
             id: 'part-a',
             label: 'Part A',
-            title: 'General Information & Academic Background',
-            description: 'Basic details, qualifications, and experience',
+            title: 'General Information',
+            description: 'Personal details, academic qualifications & teaching experience',
             icon: User,
             href: '/appraisal/part-a',
             complete: !!fullData?.partA?.basic,
-            max: '-',
-            score: '-',
+            max: null,
+            score: null,
         },
         {
             id: 'part-b',
             label: 'Part B',
-            title: 'Research & Academic Contributions',
-            description: '14 subsections including publications, projects, patents',
+            title: 'Research & Academic',
+            description: 'Publications, projects, patents, awards & academic contributions',
             icon: BookOpen,
             href: '/appraisal/part-b',
             complete: (fullData?.partB?.researchJournals?.length || 0) > 0,
@@ -92,8 +159,8 @@ export default function AppraisalPage() {
         {
             id: 'part-c',
             label: 'Part C',
-            title: 'Academic / Administrative Contribution',
-            description: 'Key contributions, committee roles, professional bodies',
+            title: 'Contributions',
+            description: 'Key contributions, committee roles & professional memberships',
             icon: Award,
             href: '/appraisal/part-c',
             complete: !!fullData?.partC?.keyContribution,
@@ -104,7 +171,7 @@ export default function AppraisalPage() {
             id: 'part-d',
             label: 'Part D',
             title: 'Values',
-            description: 'Self-assessment on core values and professional conduct',
+            description: 'Self-rating on professional values & ethical conduct',
             icon: Heart,
             href: '/appraisal/part-d',
             complete: !!fullData?.partD,
@@ -115,12 +182,12 @@ export default function AppraisalPage() {
             id: 'part-e',
             label: 'Part E',
             title: 'Self Assessment',
-            description: 'Summary of achievements and future goals',
+            description: 'Summary of achievements, goals & development needs',
             icon: Target,
             href: '/appraisal/part-e',
             complete: !!fullData?.partE,
-            max: '-',
-            score: '-',
+            max: null,
+            score: null,
         },
     ];
 
@@ -150,237 +217,178 @@ export default function AppraisalPage() {
             />
 
             <div className="p-6 space-y-6">
-                {/* Rejection Alert - Show when appraisal was sent back */}
+                {/* Rejection Alert */}
                 {appraisal?.rejectionReason && appraisal?.status === 'DRAFT' && (
                     <Alert variant="warning" title="Appraisal Sent Back for Revision">
                         <div className="space-y-2">
-                            <p>
-                                <strong>Rejected by:</strong> {appraisal?.rejectedBy || 'Reviewer'} on {appraisal?.rejectedAt}
-                            </p>
-                            <p>
-                                <strong>Reason:</strong> {appraisal?.rejectionReason}
-                            </p>
-                            <p className="text-sm mt-2">
-                                Please review the feedback above and make the necessary corrections before resubmitting.
-                            </p>
+                            <p><strong>Rejected by:</strong> {appraisal?.rejectedBy || 'Reviewer'} on {appraisal?.rejectedAt}</p>
+                            <p><strong>Reason:</strong> {appraisal?.rejectionReason}</p>
+                            <p className="text-sm mt-2">Please review and make corrections before resubmitting.</p>
                         </div>
                     </Alert>
                 )}
 
-                {/* Status Alert */}
+                {/* Status Banner for Submitted Appraisals */}
                 {isReadOnly && (
-                    <Alert variant="info" title="Appraisal Status">
-                        <div className="flex items-center justify-between">
-                            <span>
-                                Your appraisal has been submitted and is currently in{' '}
-                                <strong>{appraisal?.status?.replace('_', ' ')}</strong> status.
-                                {appraisal?.status === 'PRINCIPAL_REVIEWED' && ' Congratulations!'}
-                            </span>
-                            <Link href={`/appraisal/view`}>
-                                <Button variant="outline" size="sm" icon={Eye}>
-                                    View Submitted Data
-                                </Button>
-                            </Link>
-                        </div>
-                    </Alert>
-                )}
-
-                {/* Overview Cards */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Progress Circle */}
-                    <Card className="flex flex-col items-center py-6">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Overall Score</h3>
-                        <CircularProgress
-                            value={totalScore}
-                            max={250}
-                            size={200}
-                            strokeWidth={16}
-                            label="Score"
-                            sublabel={`${totalScore}/250`}
-                        />
-                        <div className="mt-6 flex items-center gap-2">
-                            <span className="text-sm text-slate-600">Status:</span>
-                            <StatusBadge status={appraisal?.status || 'NOT_STARTED'} />
-                        </div>
-                    </Card>
-
-                    {/* Score Breakdown */}
-                    <Card className="lg:col-span-2">
-                        <Card.Header>
-                            <Card.Title>Score Breakdown</Card.Title>
-                        </Card.Header>
-                        <div className="space-y-4">
-                            <ProgressBar
-                                value={appraisal?.totalPartB || 0}
-                                max={120}
-                                label="Part B - Research & Academic"
-                                color="emerald"
-                            />
-                            <ProgressBar
-                                value={appraisal?.totalPartC || 0}
-                                max={100}
-                                label="Part C - Contributions"
-                                color="blue"
-                            />
-                            <ProgressBar
-                                value={appraisal?.totalPartD || 0}
-                                max={30}
-                                label="Part D - Values"
-                                color="amber"
-                            />
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <span className="font-semibold text-slate-900">Grand Total</span>
-                                <span className="text-2xl font-bold text-emerald-600">{totalScore} / 250</span>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Sections */}
-                <Card>
-                    <Card.Header>
-                        <div>
-                            <Card.Title>Appraisal Sections</Card.Title>
-                            <p className="text-sm text-slate-500 mt-1">
-                                Complete all sections to submit your appraisal
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <CheckCircle className="h-4 w-4 text-emerald-500" />
-                            <span>{completedSections} of {sections.length} completed</span>
-                        </div>
-                    </Card.Header>
-
-                    <div className="space-y-4">
-                        {sections.map((section) => (
-                            <Link
-                                key={section.id}
-                                href={section.href}
-                                className="flex items-center gap-4 rounded-xl border border-slate-200 p-5 transition-all hover:border-emerald-300 hover:shadow-sm"
-                            >
-                                <div className={`rounded-xl p-3 ${section.complete ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                                    <section.icon size={24} />
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-semibold text-emerald-600">{section.label}</span>
-                                        <span className="text-lg font-semibold text-slate-900">{section.title}</span>
-                                    </div>
-                                    <p className="text-sm text-slate-500 mt-0.5">{section.description}</p>
-                                </div>
-                                <div className="text-right">
-                                    {section.max !== '-' && (
-                                        <p className="text-lg font-bold text-slate-900">
-                                            {section.score} <span className="text-sm font-normal text-slate-400">/ {section.max}</span>
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {section.complete ? (
-                                        <CheckCircle className="h-6 w-6 text-emerald-500" />
-                                    ) : (
-                                        <Clock className="h-6 w-6 text-slate-400" />
-                                    )}
-                                    <ArrowRight className="h-5 w-5 text-slate-400" />
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </Card>
-
-                {/* Submit Section */}
-                {!isReadOnly && (
-                    <Card className="bg-linear-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                    <div className={`rounded-xl p-5 ${appraisal?.status === 'SUBMITTED' ? 'bg-blue-50 border border-blue-200' :
+                            appraisal?.status === 'HOD_REVIEWED' ? 'bg-purple-50 border border-purple-200' :
+                                appraisal?.status === 'IQAC_REVIEWED' ? 'bg-indigo-50 border border-indigo-200' :
+                                    appraisal?.status === 'PRINCIPAL_REVIEWED' ? 'bg-emerald-50 border border-emerald-200' :
+                                        'bg-slate-50 border border-slate-200'
+                        }`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="rounded-xl bg-emerald-100 p-3">
-                                    <Send className="h-6 w-6 text-emerald-600" />
-                                </div>
+                                {appraisal?.status === 'PRINCIPAL_REVIEWED' ? (
+                                    <CheckCircle size={24} className="text-emerald-600" />
+                                ) : (
+                                    <Clock size={24} className="text-blue-600" />
+                                )}
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-900">Ready to Submit?</h3>
+                                    <h3 className="font-semibold text-slate-900">
+                                        {appraisal?.status === 'SUBMITTED' && 'Awaiting HOD Review'}
+                                        {appraisal?.status === 'HOD_REVIEWED' && 'Awaiting IQAC Review'}
+                                        {appraisal?.status === 'IQAC_REVIEWED' && 'Awaiting Principal Approval'}
+                                        {appraisal?.status === 'PRINCIPAL_REVIEWED' && 'Appraisal Approved! 🎉'}
+                                    </h3>
                                     <p className="text-sm text-slate-600">
-                                        {canSubmit
-                                            ? 'All sections are complete. You can submit your appraisal for review.'
-                                            : `Complete all ${sections.length - completedSections} remaining section(s) to enable submission.`
-                                        }
+                                        Current Status: <StatusBadge status={appraisal?.status} />
                                     </p>
                                 </div>
                             </div>
-                            <Button
-                                size="lg"
-                                icon={Send}
-                                disabled={!canSubmit}
-                                onClick={() => setShowSubmitModal(true)}
-                            >
-                                Submit Appraisal
-                            </Button>
+                            <Link href="/appraisal/view">
+                                <Button variant="outline" icon={Eye}>View Details</Button>
+                            </Link>
                         </div>
-                    </Card>
+                    </div>
                 )}
 
-                {/* Review Status */}
-                {isReadOnly && appraisal?.status !== 'DRAFT' && appraisal && (
-                    <Card>
-                        <Card.Header>
-                            <Card.Title>Review Progress</Card.Title>
-                        </Card.Header>
+                {/* Main Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Score Summary - Left Side */}
+                    <div className="lg:col-span-1 space-y-4">
+                        <Card>
+                            <div className="text-center py-4">
+                                <h3 className="text-sm font-medium text-slate-500 mb-4">Total Score</h3>
+                                <CircularProgress
+                                    value={totalScore}
+                                    max={250}
+                                    size={150}
+                                    strokeWidth={12}
+                                    label="Score"
+                                    sublabel={`${totalScore}/250`}
+                                />
+                            </div>
+                        </Card>
+
+                        {/* Completion Progress */}
+                        <Card className="bg-slate-50">
+                            <div className="p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-medium text-slate-700">Completion</span>
+                                    <span className="text-sm font-bold text-slate-900">{completedSections}/5</span>
+                                </div>
+                                <div className="flex gap-1">
+                                    {sections.map((section, i) => (
+                                        <div
+                                            key={i}
+                                            className={`h-2 flex-1 rounded-full ${section.complete ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                        />
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2 text-center">
+                                    {completedSections === 5 ? 'All sections complete!' : `${5 - completedSections} section(s) remaining`}
+                                </p>
+                            </div>
+                        </Card>
+
+                        {/* Score Breakdown */}
+                        <Card>
+                            <div className="p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-slate-700 mb-3">Score Breakdown</h4>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-600">Part B</span>
+                                    <span className="font-bold">{appraisal?.totalPartB || 0}/120</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-600">Part C</span>
+                                    <span className="font-bold">{appraisal?.totalPartC || 0}/100</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-600">Part D</span>
+                                    <span className="font-bold">{appraisal?.totalPartD || 0}/30</span>
+                                </div>
+                                <div className="border-t border-slate-200 pt-3 mt-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-semibold text-slate-900">Total</span>
+                                        <span className="text-xl font-bold text-emerald-600">{totalScore}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Sections List - Right Side */}
+                    <div className="lg:col-span-3">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4">
-                                <div className={`rounded-full p-2 ${appraisal?.submittedAt ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    <Send size={20} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-slate-900">Submitted</p>
-                                    <p className="text-sm text-slate-500">{appraisal?.submittedAt || 'Pending'}</p>
-                                </div>
-                                {appraisal?.submittedAt && <CheckCircle className="h-5 w-5 text-emerald-500" />}
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="text-xl font-bold text-slate-900">Appraisal Sections</h2>
+                                <p className="text-sm text-slate-500">Complete all sections in order</p>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className={`rounded-full p-2 ${appraisal?.hodApprovedAt ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    <User size={20} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-slate-900">HOD Review</p>
-                                    <p className="text-sm text-slate-500">{appraisal?.hodRemarks || (appraisal?.hodApprovedAt ? 'Approved' : 'Pending')}</p>
-                                </div>
-                                {appraisal?.hodApprovedAt && <CheckCircle className="h-5 w-5 text-emerald-500" />}
-                            </div>
+                            {sections.map((section, index) => (
+                                <SectionCard
+                                    key={section.id}
+                                    section={section}
+                                    index={index}
+                                    isReadOnly={isReadOnly}
+                                />
+                            ))}
 
-                            <div className="flex items-center gap-4">
-                                <div className={`rounded-full p-2 ${appraisal?.iqacApprovedAt ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    <Award size={20} />
+                            {/* Submit Button */}
+                            {!isReadOnly && (
+                                <div className={`mt-6 rounded-2xl p-6 ${canSubmit ? 'bg-linear-to-r from-emerald-500 to-teal-500' : 'bg-slate-100'}`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-xl ${canSubmit ? 'bg-white/20' : 'bg-slate-200'}`}>
+                                                <Send size={24} className={canSubmit ? 'text-white' : 'text-slate-400'} />
+                                            </div>
+                                            <div>
+                                                <h3 className={`text-lg font-semibold ${canSubmit ? 'text-white' : 'text-slate-600'}`}>
+                                                    {canSubmit ? 'Ready to Submit!' : 'Complete All Sections'}
+                                                </h3>
+                                                <p className={`text-sm ${canSubmit ? 'text-white/80' : 'text-slate-500'}`}>
+                                                    {canSubmit
+                                                        ? 'Your appraisal will be sent to HOD for review'
+                                                        : `${5 - completedSections} section(s) remaining to complete`
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="lg"
+                                            variant={canSubmit ? 'secondary' : 'ghost'}
+                                            icon={Send}
+                                            disabled={!canSubmit}
+                                            onClick={() => setShowSubmitModal(true)}
+                                            className={canSubmit ? 'bg-white text-emerald-600 hover:bg-white/90' : ''}
+                                        >
+                                            Submit Appraisal
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-slate-900">IQAC Review</p>
-                                    <p className="text-sm text-slate-500">{appraisal?.iqacRemarks || (appraisal?.iqacApprovedAt ? 'Approved' : 'Pending')}</p>
-                                </div>
-                                {appraisal?.iqacApprovedAt && <CheckCircle className="h-5 w-5 text-emerald-500" />}
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className={`rounded-full p-2 ${appraisal?.principalApprovedAt ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    <FileText size={20} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-slate-900">Principal Approval</p>
-                                    <p className="text-sm text-slate-500">{appraisal?.principalRemarks || (appraisal?.principalApprovedAt ? 'Approved' : 'Pending')}</p>
-                                </div>
-                                {appraisal?.principalApprovedAt && <CheckCircle className="h-5 w-5 text-emerald-500" />}
-                            </div>
+                            )}
                         </div>
-                    </Card>
-                )}
+                    </div>
+                </div>
             </div>
 
+            {/* Modals */}
             <ConfirmModal
                 isOpen={showSubmitModal}
                 onClose={() => setShowSubmitModal(false)}
                 onConfirm={handleSubmit}
                 title="Submit Appraisal"
-                message="Are you sure you want to submit your appraisal? Once submitted, you won't be able to make any changes. Your appraisal will be sent for HOD review."
+                message="Are you sure you want to submit? Once submitted, you won't be able to make changes until the review is complete."
                 confirmText="Submit"
                 variant="primary"
                 loading={submitting}
@@ -390,7 +398,7 @@ export default function AppraisalPage() {
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
                 title="Appraisal Submitted!"
-                message="Your appraisal has been successfully submitted. It will now be reviewed by your HOD. You can track the review progress on this page."
+                message="Your appraisal has been sent for HOD review. You can track progress from your dashboard."
             />
         </DashboardLayout>
     );

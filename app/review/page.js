@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useAppraisal } from '@/lib/context/AppraisalContext';
@@ -32,7 +32,7 @@ const statusConfig = {
     PRINCIPAL_REVIEWED: { label: 'Completed', variant: 'success' },
 };
 
-export default function ReviewListPage() {
+function ReviewListContent() {
     const { user } = useAuth();
     const { getAllAppraisals } = useAppraisal();
     const searchParams = useSearchParams();
@@ -305,5 +305,24 @@ export default function ReviewListPage() {
                 </Card>
             </div>
         </DashboardLayout>
+    );
+}
+
+// Wrapper component with Suspense boundary
+export default function ReviewListPage() {
+    return (
+        <Suspense fallback={
+            <DashboardLayout>
+                <Header title="Reviews" subtitle="Loading..." />
+                <div className="p-6">
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-10 bg-slate-200 rounded w-1/3"></div>
+                        <div className="h-64 bg-slate-200 rounded"></div>
+                    </div>
+                </div>
+            </DashboardLayout>
+        }>
+            <ReviewListContent />
+        </Suspense>
     );
 }

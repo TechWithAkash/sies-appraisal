@@ -47,24 +47,24 @@ function ValueRating({ id, label, value, maxValue, onChange, disabled }) {
     const description = valueDescriptions[id] || '';
 
     const ratings = [
-        { value: 0, label: 'Not Observed', color: 'bg-slate-200' },
-        { value: Math.round(maxValue * 0.25), label: 'Needs Improvement', color: 'bg-red-400' },
-        { value: Math.round(maxValue * 0.5), label: 'Satisfactory', color: 'bg-amber-400' },
-        { value: Math.round(maxValue * 0.75), label: 'Good', color: 'bg-blue-400' },
+        { value: 1, label: 'Needs Work', color: 'bg-red-500' },
+        { value: 2, label: 'Fair', color: 'bg-orange-500' },
+        { value: 3, label: 'Good', color: 'bg-amber-500' },
+        { value: 4, label: 'Very Good', color: 'bg-blue-500' },
         { value: maxValue, label: 'Excellent', color: 'bg-emerald-500' },
     ];
 
     return (
-        <Card className={`transition-all ${value === maxValue ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`}>
+        <div className={`p-5 rounded-xl border-2 transition-all ${value === maxValue ? 'border-emerald-300 bg-emerald-50' : value > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50'}`}>
             <div className="flex items-start gap-4">
                 <div className={`p-3 rounded-xl ${value > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
                     <Icon size={24} />
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-slate-900">{label}</h4>
-                        <span className="text-lg font-bold text-emerald-600">
-                            {value} <span className="text-sm font-normal text-slate-400">/ {maxValue}</span>
+                        <h4 className="font-semibold text-slate-900 text-lg">{label}</h4>
+                        <span className="text-xl font-bold text-emerald-600">
+                            {value}<span className="text-sm font-normal text-slate-400">/{maxValue}</span>
                         </span>
                     </div>
                     <p className="text-sm text-slate-500 mb-4">{description}</p>
@@ -75,9 +75,9 @@ function ValueRating({ id, label, value, maxValue, onChange, disabled }) {
                                 key={rating.value}
                                 onClick={() => !disabled && onChange(rating.value)}
                                 disabled={disabled}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${value === rating.value
-                                    ? `${rating.color} text-white shadow-md scale-105`
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${value === rating.value
+                                        ? `${rating.color} text-white shadow-md`
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                             >
                                 {rating.label}
@@ -86,7 +86,7 @@ function ValueRating({ id, label, value, maxValue, onChange, disabled }) {
                     </div>
                 </div>
             </div>
-        </Card>
+        </div>
     );
 }
 
@@ -130,18 +130,6 @@ export default function PartDPage() {
         setValues(prev => ({ ...prev, [key]: value }));
     };
 
-    // Load sample data for prototype
-    const loadSampleData = () => {
-        setValues({
-            attendance: 5,
-            responsibility: 4,
-            honesty: 5,
-            teamwork: 4,
-            inclusiveness: 4,
-            conduct: 5,
-        });
-    };
-
     const handleSave = async () => {
         if (!appraisal) return;
 
@@ -173,22 +161,17 @@ export default function PartDPage() {
     return (
         <DashboardLayout>
             <Header
-                title="Part D - Values & Ethics"
-                subtitle="Maximum 30 marks across all criteria"
+                title="Part D - Values"
+                subtitle="Self-assessment of professional values (Max 30 marks)"
             />
 
             <div className="p-6 space-y-6">
-                {/* Back Link & Save */}
+                {/* Back Link */}
                 <div className="flex items-center justify-between">
-                    <Link href="/appraisal" className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
-                        <ArrowLeft size={16} />
-                        Back to Appraisal Overview
+                    <Link href="/appraisal" className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-medium transition-colors">
+                        <ArrowLeft size={18} />
+                        Back to Overview
                     </Link>
-                    {!isReadOnly && (
-                        <Button variant="outline" onClick={loadSampleData} size="sm">
-                            Load Sample Data
-                        </Button>
-                    )}
                 </div>
 
                 {isReadOnly && (
@@ -197,18 +180,16 @@ export default function PartDPage() {
                     </Alert>
                 )}
 
-                {/* Total Score Card */}
+                {/* Score Summary Card */}
                 <Card className="bg-linear-to-r from-purple-50 to-pink-50 border-purple-200">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-lg font-semibold text-slate-900">Part D Total Score</h3>
-                            <p className="text-sm text-slate-600 mt-1">
-                                Sum of all value ratings (capped at maximum)
-                            </p>
+                            <h3 className="text-lg font-semibold text-slate-900">Your Total Score</h3>
+                            <p className="text-sm text-slate-600">Rate yourself on each value below</p>
                         </div>
                         <div className="text-right">
                             <p className="text-4xl font-bold text-purple-600">
-                                {calculation.total} <span className="text-lg font-normal text-slate-400">/ {PART_D_TOTAL_MAX}</span>
+                                {calculation.total}<span className="text-lg font-normal text-slate-400">/{PART_D_TOTAL_MAX}</span>
                             </p>
                         </div>
                     </div>
@@ -219,22 +200,18 @@ export default function PartDPage() {
                         className="mt-4"
                         color="purple"
                     />
-
-                    {/* Mini breakdown */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-4 pt-4 border-t border-purple-200">
-                        {Object.entries(PART_D_VALUES).map(([key, max]) => (
-                            <div key={key} className="text-center">
-                                <p className="text-xs text-slate-500 mb-1 capitalize">{key}</p>
-                                <p className="text-lg font-semibold text-slate-900">
-                                    {values[key]}<span className="text-xs text-slate-400">/{max}</span>
-                                </p>
-                            </div>
-                        ))}
-                    </div>
                 </Card>
 
+                {/* Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-sm text-blue-800">
+                        <strong>Instructions:</strong> Click on the rating that best describes your performance for each value.
+                        Be honest in your assessment - this will be reviewed by your HOD.
+                    </p>
+                </div>
+
                 {/* Value Rating Cards */}
-                <div className="grid gap-4">
+                <div className="space-y-4">
                     {Object.entries(PART_D_VALUES).map(([key, max]) => (
                         <ValueRating
                             key={key}
@@ -248,28 +225,10 @@ export default function PartDPage() {
                     ))}
                 </div>
 
-                {/* Info Card */}
-                <Card className="bg-slate-50 border-slate-200">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-slate-200 rounded-lg">
-                            <Shield size={20} className="text-slate-600" />
-                        </div>
-                        <div>
-                            <h4 className="font-medium text-slate-900">About Value Ratings</h4>
-                            <p className="text-sm text-slate-600 mt-1">
-                                This section assesses your alignment with institutional values and professional ethics.
-                                The ratings are self-assessed but will be reviewed and validated by HOD during the review process.
-                                Be honest in your self-assessment as it reflects your professional integrity.
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Bottom Navigation */}
+                {/* Save Button */}
                 {!isReadOnly && (
                     <div className="flex items-center justify-center p-4 bg-white rounded-xl shadow-lg border sticky bottom-4">
-                        <Button onClick={handleSave} loading={saving} className="bg-emerald-600 hover:bg-emerald-700 px-8">
-                            <Save size={16} className="mr-2" />
+                        <Button onClick={handleSave} loading={saving} icon={Save} className="bg-emerald-600 hover:bg-emerald-700 px-8">
                             Save Part D
                         </Button>
                     </div>

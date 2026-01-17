@@ -173,13 +173,12 @@ export default function AdminAppraisalsPage() {
                 return (
                     <div className="flex items-center gap-1">
                         {['H', 'I', 'P'].map((letter, i) => (
-                            <div 
+                            <div
                                 key={letter}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                                    currentIndex > i ? 'bg-emerald-500 text-white' :
-                                    currentIndex === i ? 'bg-amber-500 text-white' :
-                                    'bg-slate-200 text-slate-500'
-                                }`}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${currentIndex > i ? 'bg-emerald-500 text-white' :
+                                        currentIndex === i ? 'bg-amber-500 text-white' :
+                                            'bg-slate-200 text-slate-500'
+                                    }`}
                             >
                                 {letter}
                             </div>

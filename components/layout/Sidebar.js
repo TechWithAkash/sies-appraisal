@@ -116,8 +116,8 @@ export default function Sidebar() {
                                 <Link
                                     href={item.href}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive
-                                            ? 'bg-emerald-500/20 text-emerald-400'
-                                            : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                                         }`}
                                     title={collapsed ? item.name : ''}
                                 >

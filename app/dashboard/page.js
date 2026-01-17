@@ -43,237 +43,359 @@ function TeacherDashboard() {
 
     const appraisalStatus = currentAppraisal?.status || 'NOT_STARTED';
     const grandTotal = currentAppraisal?.grandTotal || 0;
-    const percentage = Math.round((grandTotal / 250) * 100);
 
+    // Simplified sections with clear descriptions
     const sections = [
-        { id: 'part-a', label: 'Part A - General Information', icon: Users, href: '/appraisal/part-a', complete: !!fullData?.partA?.basic },
-        { id: 'part-b', label: 'Part B - Research & Academic', icon: BookOpen, href: '/appraisal/part-b', complete: (fullData?.partB?.researchJournals?.length || 0) > 0 },
-        { id: 'part-c', label: 'Part C - Contributions', icon: Award, href: '/appraisal/part-c', complete: !!fullData?.partC?.keyContribution },
-        { id: 'part-d', label: 'Part D - Values', icon: Heart, href: '/appraisal/part-d', complete: !!fullData?.partD },
-        { id: 'part-e', label: 'Part E - Self Assessment', icon: Target, href: '/appraisal/part-e', complete: !!fullData?.partE },
+        {
+            id: 'part-a',
+            label: 'Part A',
+            title: 'General Information',
+            desc: 'Personal details, qualifications & experience',
+            icon: Users,
+            href: '/appraisal/part-a',
+            complete: !!fullData?.partA?.basic,
+            score: null,
+            maxScore: null,
+        },
+        {
+            id: 'part-b',
+            label: 'Part B',
+            title: 'Research & Academic',
+            desc: 'Publications, projects, patents & awards',
+            icon: BookOpen,
+            href: '/appraisal/part-b',
+            complete: (fullData?.partB?.researchJournals?.length || 0) > 0,
+            score: currentAppraisal?.totalPartB || 0,
+            maxScore: 120,
+        },
+        {
+            id: 'part-c',
+            label: 'Part C',
+            title: 'Contributions',
+            desc: 'Committee roles, memberships & feedback',
+            icon: Award,
+            href: '/appraisal/part-c',
+            complete: !!fullData?.partC?.keyContribution,
+            score: currentAppraisal?.totalPartC || 0,
+            maxScore: 100,
+        },
+        {
+            id: 'part-d',
+            label: 'Part D',
+            title: 'Values',
+            desc: 'Professional conduct & ethics',
+            icon: Heart,
+            href: '/appraisal/part-d',
+            complete: !!fullData?.partD,
+            score: currentAppraisal?.totalPartD || 0,
+            maxScore: 30,
+        },
+        {
+            id: 'part-e',
+            label: 'Part E',
+            title: 'Self Assessment',
+            desc: 'Achievements, goals & development',
+            icon: Target,
+            href: '/appraisal/part-e',
+            complete: !!fullData?.partE,
+            score: null,
+            maxScore: null,
+        },
     ];
+
+    const completedCount = sections.filter(s => s.complete).length;
+    const isReadOnly = appraisalStatus !== 'DRAFT';
+
+    // Status steps for progress tracker
+    const statusSteps = [
+        { key: 'DRAFT', label: 'Draft', desc: 'Fill all sections' },
+        { key: 'SUBMITTED', label: 'Submitted', desc: 'Sent for review' },
+        { key: 'HOD_REVIEWED', label: 'HOD Review', desc: 'Department head' },
+        { key: 'IQAC_REVIEWED', label: 'IQAC Review', desc: 'Quality check' },
+        { key: 'PRINCIPAL_REVIEWED', label: 'Approved', desc: 'Final approval' },
+    ];
+    const statusOrder = ['NOT_STARTED', 'DRAFT', 'SUBMITTED', 'HOD_REVIEWED', 'IQAC_REVIEWED', 'PRINCIPAL_REVIEWED'];
+    const currentStatusIndex = statusOrder.indexOf(appraisalStatus);
 
     return (
         <>
             <Header
-                title={`Welcome back, ${user.name?.split(' ')[0]}`}
-                subtitle={`${user.designation} • ${user.department}`}
+                title={`Welcome, ${user.name?.split(' ')[0]}!`}
+                subtitle={currentCycle ? `Appraisal Year: ${currentCycle.academicYear}` : 'No active appraisal cycle'}
             />
 
             <div className="p-6 space-y-6">
-                {/* Alert Banner */}
-                {currentCycle && appraisalStatus === 'DRAFT' && (
-                    <div className="flex items-center gap-4 rounded-xl bg-amber-50 border border-amber-200 p-4">
-                        <AlertCircle className="h-5 w-5 text-amber-500" />
-                        <div className="flex-1">
-                            <p className="font-medium text-amber-800">Appraisal Submission Pending</p>
-                            <p className="text-sm text-amber-700">
-                                Complete your appraisal for {currentCycle.academicYear} before the deadline.
-                            </p>
-                        </div>
-                        <Link href="/appraisal">
-                            <Button size="sm" icon={ArrowRight} iconPosition="right">
-                                Continue Appraisal
-                            </Button>
-                        </Link>
-                    </div>
-                )}
-
-                {/* Appraisal Review Progress Tracker */}
-                {currentAppraisal && (
-                    <Card>
-                        <Card.Header>
-                            <Card.Title>Appraisal Review Progress</Card.Title>
-                            <StatusBadge status={appraisalStatus} />
-                        </Card.Header>
-                        <div className="py-4">
-                            {/* Progress Steps */}
-                            <div className="relative">
-                                {/* Progress Line Background */}
-                                <div className="absolute top-6 left-0 right-0 h-1 bg-slate-200 rounded-full mx-8" />
-
-                                {/* Active Progress Line */}
-                                <div
-                                    className="absolute top-6 left-0 h-1 bg-emerald-500 rounded-full mx-8 transition-all duration-500"
-                                    style={{
-                                        width: `calc(${appraisalStatus === 'DRAFT' ? '0%' :
-                                            appraisalStatus === 'SUBMITTED' ? '25%' :
-                                                appraisalStatus === 'HOD_REVIEWED' ? '50%' :
-                                                    appraisalStatus === 'IQAC_REVIEWED' ? '75%' :
-                                                        appraisalStatus === 'PRINCIPAL_REVIEWED' ? '100%' : '0%'
-                                            } - 4rem)`
-                                    }}
-                                />
-
-                                {/* Steps */}
-                                <div className="relative flex justify-between">
-                                    {[
-                                        { key: 'DRAFT', label: 'Draft', sublabel: 'Fill Form', icon: FileText },
-                                        { key: 'SUBMITTED', label: 'Submitted', sublabel: 'Awaiting HOD', icon: Clock },
-                                        { key: 'HOD_REVIEWED', label: 'HOD Review', sublabel: 'Department Head', icon: Users },
-                                        { key: 'IQAC_REVIEWED', label: 'IQAC Review', sublabel: 'Quality Cell', icon: Award },
-                                        { key: 'PRINCIPAL_REVIEWED', label: 'Approved', sublabel: 'Principal', icon: CheckCircle },
-                                    ].map((step, index) => {
-                                        const statusOrder = ['NOT_STARTED', 'DRAFT', 'SUBMITTED', 'HOD_REVIEWED', 'IQAC_REVIEWED', 'PRINCIPAL_REVIEWED'];
-                                        const currentIndex = statusOrder.indexOf(appraisalStatus);
-                                        const stepIndex = statusOrder.indexOf(step.key);
-                                        const isCompleted = stepIndex < currentIndex;
-                                        const isCurrent = stepIndex === currentIndex;
-                                        const isPending = stepIndex > currentIndex;
-
-                                        return (
-                                            <div key={step.key} className="flex flex-col items-center z-10">
-                                                <div
-                                                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all ${isCompleted
-                                                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                                                        : isCurrent
-                                                            ? 'bg-blue-500 border-blue-500 text-white animate-pulse'
-                                                            : 'bg-white border-slate-300 text-slate-400'
-                                                        }`}
-                                                >
-                                                    {isCompleted ? (
-                                                        <CheckCircle size={24} />
-                                                    ) : (
-                                                        <step.icon size={20} />
-                                                    )}
-                                                </div>
-                                                <p className={`mt-2 text-sm font-medium ${isCompleted ? 'text-emerald-600' :
-                                                    isCurrent ? 'text-blue-600' :
-                                                        'text-slate-400'
-                                                    }`}>
-                                                    {step.label}
-                                                </p>
-                                                <p className={`text-xs ${isCompleted ? 'text-emerald-500' :
-                                                    isCurrent ? 'text-blue-500' :
-                                                        'text-slate-400'
-                                                    }`}>
-                                                    {step.sublabel}
-                                                </p>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Status Message */}
-                            <div className={`mt-6 p-4 rounded-lg text-center ${appraisalStatus === 'DRAFT' ? 'bg-amber-50 border border-amber-200' :
-                                appraisalStatus === 'SUBMITTED' ? 'bg-blue-50 border border-blue-200' :
-                                    appraisalStatus === 'HOD_REVIEWED' ? 'bg-purple-50 border border-purple-200' :
-                                        appraisalStatus === 'IQAC_REVIEWED' ? 'bg-indigo-50 border border-indigo-200' :
-                                            appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'bg-emerald-50 border border-emerald-200' :
-                                                'bg-slate-50 border border-slate-200'
+                {/* Simple Status Banner */}
+                <div className={`rounded-xl p-5 ${appraisalStatus === 'DRAFT' ? 'bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200' :
+                        appraisalStatus === 'SUBMITTED' ? 'bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200' :
+                            appraisalStatus === 'HOD_REVIEWED' ? 'bg-linear-to-r from-purple-50 to-pink-50 border border-purple-200' :
+                                appraisalStatus === 'IQAC_REVIEWED' ? 'bg-linear-to-r from-indigo-50 to-violet-50 border border-indigo-200' :
+                                    appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200' :
+                                        'bg-linear-to-r from-slate-50 to-gray-50 border border-slate-200'
+                    }`}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-xl ${appraisalStatus === 'DRAFT' ? 'bg-amber-100' :
+                                    appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'bg-emerald-100' :
+                                        'bg-blue-100'
                                 }`}>
-                                <p className={`font-medium ${appraisalStatus === 'DRAFT' ? 'text-amber-800' :
-                                    appraisalStatus === 'SUBMITTED' ? 'text-blue-800' :
-                                        appraisalStatus === 'HOD_REVIEWED' ? 'text-purple-800' :
-                                            appraisalStatus === 'IQAC_REVIEWED' ? 'text-indigo-800' :
-                                                appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'text-emerald-800' :
-                                                    'text-slate-800'
-                                    }`}>
-                                    {appraisalStatus === 'DRAFT' && '📝 Your appraisal is in draft. Complete all sections and submit.'}
-                                    {appraisalStatus === 'SUBMITTED' && '⏳ Your appraisal has been submitted and is awaiting HOD review.'}
-                                    {appraisalStatus === 'HOD_REVIEWED' && '✅ HOD has reviewed. Now pending IQAC review.'}
-                                    {appraisalStatus === 'IQAC_REVIEWED' && '✅ IQAC has reviewed. Now pending Principal approval.'}
-                                    {appraisalStatus === 'PRINCIPAL_REVIEWED' && '🎉 Congratulations! Your appraisal has been fully approved.'}
+                                {appraisalStatus === 'DRAFT' ? <FileText size={24} className="text-amber-600" /> :
+                                    appraisalStatus === 'PRINCIPAL_REVIEWED' ? <CheckCircle size={24} className="text-emerald-600" /> :
+                                        <Clock size={24} className="text-blue-600" />}
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900">
+                                    {appraisalStatus === 'DRAFT' && 'Complete Your Appraisal'}
+                                    {appraisalStatus === 'SUBMITTED' && 'Awaiting HOD Review'}
+                                    {appraisalStatus === 'HOD_REVIEWED' && 'Awaiting IQAC Review'}
+                                    {appraisalStatus === 'IQAC_REVIEWED' && 'Awaiting Principal Approval'}
+                                    {appraisalStatus === 'PRINCIPAL_REVIEWED' && 'Appraisal Approved! 🎉'}
+                                    {appraisalStatus === 'NOT_STARTED' && 'Start Your Appraisal'}
+                                </h3>
+                                <p className="text-sm text-slate-600">
+                                    {appraisalStatus === 'DRAFT' && `${completedCount}/5 sections completed`}
+                                    {appraisalStatus === 'SUBMITTED' && 'Your appraisal is under review by your department head'}
+                                    {appraisalStatus === 'HOD_REVIEWED' && 'HOD approved. Now with IQAC for quality review'}
+                                    {appraisalStatus === 'IQAC_REVIEWED' && 'IQAC approved. Pending final Principal approval'}
+                                    {appraisalStatus === 'PRINCIPAL_REVIEWED' && 'Congratulations! Your appraisal is complete'}
+                                    {appraisalStatus === 'NOT_STARTED' && 'Begin your annual appraisal submission'}
                                 </p>
                             </div>
                         </div>
-                    </Card>
-                )}
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        title="Current Appraisal"
-                        value={currentCycle?.academicYear || 'N/A'}
-                        subtitle={`Status: ${appraisalStatus}`}
-                        icon={Calendar}
-                        color="blue"
-                    />
-                    <StatCard
-                        title="Part B Score"
-                        value={`${currentAppraisal?.totalPartB || 0}/120`}
-                        subtitle="Research & Academic"
-                        icon={BookOpen}
-                        color="emerald"
-                    />
-                    <StatCard
-                        title="Part C Score"
-                        value={`${currentAppraisal?.totalPartC || 0}/100`}
-                        subtitle="Contributions"
-                        icon={Award}
-                        color="amber"
-                    />
-                    <StatCard
-                        title="Part D Score"
-                        value={`${currentAppraisal?.totalPartD || 0}/30`}
-                        subtitle="Values"
-                        icon={Heart}
-                        color="purple"
-                    />
+                        {appraisalStatus === 'DRAFT' && (
+                            <Link href="/appraisal">
+                                <Button icon={ArrowRight} iconPosition="right">
+                                    Continue
+                                </Button>
+                            </Link>
+                        )}
+                        {isReadOnly && (
+                            <Link href="/appraisal/view">
+                                <Button variant="outline" icon={Eye}>
+                                    View Details
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Progress Card */}
+                {/* Appraisal Progress Tracker - Always visible */}
+                <div className="bg-white rounded-xl border p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-slate-800">Appraisal Progress</h3>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            appraisalStatus === 'DRAFT' ? 'bg-amber-100 text-amber-700' :
+                            appraisalStatus === 'SUBMITTED' ? 'bg-blue-100 text-blue-700' :
+                            appraisalStatus === 'HOD_REVIEWED' ? 'bg-purple-100 text-purple-700' :
+                            appraisalStatus === 'IQAC_REVIEWED' ? 'bg-indigo-100 text-indigo-700' :
+                            appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'bg-emerald-100 text-emerald-700' :
+                            'bg-slate-100 text-slate-600'
+                        }`}>
+                            {appraisalStatus === 'NOT_STARTED' ? 'Not Started' : 
+                             appraisalStatus === 'DRAFT' ? 'In Progress' :
+                             appraisalStatus === 'SUBMITTED' ? 'Under Review' :
+                             appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'Complete' : 'Processing'}
+                        </span>
+                    </div>
+                    
+                    {/* Progress Steps */}
+                    <div className="relative">
+                        {/* Progress Line Background */}
+                        <div className="absolute top-5 left-0 right-0 h-0.5 bg-slate-200" />
+                        {/* Progress Line Filled */}
+                        <div 
+                            className="absolute top-5 left-0 h-0.5 bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${Math.max(0, (currentStatusIndex - 1) / (statusSteps.length - 1) * 100)}%` }}
+                        />
+                        
+                        <div className="relative flex justify-between">
+                            {statusSteps.map((step, index) => {
+                                const stepIndex = statusOrder.indexOf(step.key);
+                                const isCompleted = stepIndex < currentStatusIndex;
+                                const isCurrent = stepIndex === currentStatusIndex;
+                                const isPending = stepIndex > currentStatusIndex;
+
+                                return (
+                                    <div key={step.key} className="flex flex-col items-center" style={{ width: '20%' }}>
+                                        {/* Step Circle */}
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all ${
+                                            isCompleted 
+                                                ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                                : isCurrent 
+                                                    ? 'bg-white border-blue-500 text-blue-600 shadow-lg shadow-blue-100' 
+                                                    : 'bg-white border-slate-200 text-slate-400'
+                                        }`}>
+                                            {isCompleted ? (
+                                                <CheckCircle size={18} />
+                                            ) : isCurrent ? (
+                                                <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </div>
+                                        
+                                        {/* Step Label */}
+                                        <span className={`text-xs font-medium mt-2 text-center ${
+                                            isCompleted ? 'text-emerald-600' :
+                                            isCurrent ? 'text-blue-600' :
+                                            'text-slate-400'
+                                        }`}>
+                                            {step.label}
+                                        </span>
+                                        
+                                        {/* Step Description */}
+                                        <span className="text-[10px] text-slate-400 mt-0.5 text-center hidden sm:block">
+                                            {step.desc}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    
+                    {/* Current Status Message */}
+                    <div className={`mt-5 p-3 rounded-lg text-sm ${
+                        appraisalStatus === 'DRAFT' ? 'bg-amber-50 text-amber-800' :
+                        appraisalStatus === 'SUBMITTED' ? 'bg-blue-50 text-blue-800' :
+                        appraisalStatus === 'HOD_REVIEWED' ? 'bg-purple-50 text-purple-800' :
+                        appraisalStatus === 'IQAC_REVIEWED' ? 'bg-indigo-50 text-indigo-800' :
+                        appraisalStatus === 'PRINCIPAL_REVIEWED' ? 'bg-emerald-50 text-emerald-800' :
+                        'bg-slate-50 text-slate-700'
+                    }`}>
+                        {appraisalStatus === 'NOT_STARTED' && (
+                            <span>📝 Start your appraisal by filling Part A - General Information</span>
+                        )}
+                        {appraisalStatus === 'DRAFT' && (
+                            <span>✏️ Complete all 5 sections and submit for review ({completedCount}/5 done)</span>
+                        )}
+                        {appraisalStatus === 'SUBMITTED' && (
+                            <span>⏳ Your HOD is reviewing your appraisal. You'll be notified once reviewed.</span>
+                        )}
+                        {appraisalStatus === 'HOD_REVIEWED' && (
+                            <span>✅ HOD approved! Now with IQAC for quality assurance review.</span>
+                        )}
+                        {appraisalStatus === 'IQAC_REVIEWED' && (
+                            <span>✅ IQAC approved! Awaiting final approval from Principal.</span>
+                        )}
+                        {appraisalStatus === 'PRINCIPAL_REVIEWED' && (
+                            <span>🎉 Congratulations! Your appraisal has been fully approved.</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Score Summary Card */}
                     <Card className="lg:col-span-1">
-                        <Card.Header>
-                            <Card.Title>Overall Progress</Card.Title>
-                        </Card.Header>
-                        <div className="flex flex-col items-center py-4">
+                        <div className="text-center py-4">
+                            <h3 className="text-sm font-medium text-slate-500 mb-4">Total Score</h3>
                             <CircularProgress
                                 value={grandTotal}
                                 max={250}
-                                size={180}
-                                strokeWidth={14}
+                                size={160}
+                                strokeWidth={12}
                                 label="Score"
                                 sublabel={`${grandTotal}/250`}
                             />
-                            <div className="mt-6 w-full space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600">Status</span>
-                                    <StatusBadge status={appraisalStatus} />
+                            <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Part B</span>
+                                    <span className="font-semibold">{currentAppraisal?.totalPartB || 0}/120</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600">Grand Total</span>
-                                    <span className="font-semibold text-slate-900">{grandTotal} / 250</span>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Part C</span>
+                                    <span className="font-semibold">{currentAppraisal?.totalPartC || 0}/100</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Part D</span>
+                                    <span className="font-semibold">{currentAppraisal?.totalPartD || 0}/30</span>
                                 </div>
                             </div>
                         </div>
                     </Card>
 
-                    {/* Sections Card */}
-                    <Card className="lg:col-span-2">
-                        <Card.Header>
-                            <Card.Title>Appraisal Sections</Card.Title>
-                            <Link href="/appraisal">
-                                <Button variant="ghost" size="sm" icon={ArrowRight} iconPosition="right">
-                                    View All
-                                </Button>
-                            </Link>
-                        </Card.Header>
-                        <div className="space-y-3">
-                            {sections.map((section) => (
-                                <Link
-                                    key={section.id}
-                                    href={section.href}
-                                    className="flex items-center gap-4 rounded-lg border border-slate-200 p-4 transition-all hover:border-emerald-300 hover:bg-emerald-50/50"
-                                >
-                                    <div className={`rounded-lg p-2 ${section.complete ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                                        <section.icon size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-slate-900">{section.label}</p>
-                                    </div>
-                                    {section.complete ? (
-                                        <CheckCircle className="h-5 w-5 text-emerald-500" />
-                                    ) : (
-                                        <Clock className="h-5 w-5 text-slate-400" />
-                                    )}
-                                </Link>
-                            ))}
+                    {/* Sections List */}
+                    <div className="lg:col-span-3">
+                        <Card>
+                            <Card.Header>
+                                <Card.Title>Appraisal Sections</Card.Title>
+                                <span className="text-sm text-slate-500">{completedCount}/5 completed</span>
+                            </Card.Header>
+                            <div className="divide-y divide-slate-100">
+                                {sections.map((section, index) => (
+                                    <Link
+                                        key={section.id}
+                                        href={section.href}
+                                        className={`flex items-center gap-4 p-4 transition-all hover:bg-slate-50 ${isReadOnly ? 'cursor-default' : ''
+                                            }`}
+                                    >
+                                        {/* Section Number & Icon */}
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${section.complete ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                                            }`}>
+                                            <section.icon size={22} />
+                                        </div>
+
+                                        {/* Section Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-slate-400">{section.label}</span>
+                                                {section.complete && (
+                                                    <CheckCircle size={14} className="text-emerald-500" />
+                                                )}
+                                            </div>
+                                            <h4 className="font-semibold text-slate-900">{section.title}</h4>
+                                            <p className="text-sm text-slate-500 truncate">{section.desc}</p>
+                                        </div>
+
+                                        {/* Score (if applicable) */}
+                                        {section.maxScore && (
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-slate-900">
+                                                    {section.score}<span className="text-sm font-normal text-slate-400">/{section.maxScore}</span>
+                                                </div>
+                                                <div className="w-20 h-1.5 bg-slate-200 rounded-full mt-1">
+                                                    <div
+                                                        className="h-full bg-emerald-500 rounded-full transition-all"
+                                                        style={{ width: `${Math.min((section.score / section.maxScore) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Arrow */}
+                                        <ArrowRight size={18} className="text-slate-400" />
+                                    </Link>
+                                ))}
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* Quick Tips for Draft Status */}
+                {appraisalStatus === 'DRAFT' && (
+                    <Card className="bg-linear-to-r from-blue-50 to-indigo-50 border-blue-100">
+                        <div className="p-4">
+                            <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                <AlertCircle size={18} />
+                                Quick Tips
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xs font-bold">1</div>
+                                    <p className="text-blue-800">Fill all sections in order from Part A to Part E</p>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xs font-bold">2</div>
+                                    <p className="text-blue-800">Upload supporting documents for each entry</p>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xs font-bold">3</div>
+                                    <p className="text-blue-800">Save frequently - your progress is auto-saved</p>
+                                </div>
+                            </div>
                         </div>
                     </Card>
-                </div>
+                )}
             </div>
         </>
     );
@@ -1008,8 +1130,8 @@ function AdminDashboard() {
     }), [allAppraisals]);
 
     // Calculate completion percentage
-    const completionRate = allAppraisals.length > 0 
-        ? Math.round((statusCounts.PRINCIPAL_REVIEWED / allAppraisals.length) * 100) 
+    const completionRate = allAppraisals.length > 0
+        ? Math.round((statusCounts.PRINCIPAL_REVIEWED / allAppraisals.length) * 100)
         : 0;
 
     // Department-wise stats
@@ -1018,9 +1140,9 @@ function AdminDashboard() {
         allAppraisals.forEach(a => {
             const dept = a.department || a.teacher?.department || 'Unknown';
             if (!stats[dept]) {
-                stats[dept] = { 
+                stats[dept] = {
                     name: dept,
-                    total: 0, 
+                    total: 0,
                     draft: 0,
                     submitted: 0,
                     hodReviewed: 0,
@@ -1039,11 +1161,11 @@ function AdminDashboard() {
                 stats[dept].scores.push(a.finalScore || a.grandTotal || 0);
             }
         });
-        
+
         return Object.values(stats).map(dept => ({
             ...dept,
-            avgScore: dept.scores.length > 0 
-                ? Math.round(dept.scores.reduce((a, b) => a + b, 0) / dept.scores.length) 
+            avgScore: dept.scores.length > 0
+                ? Math.round(dept.scores.reduce((a, b) => a + b, 0) / dept.scores.length)
                 : 0,
             completionRate: dept.total > 0 ? Math.round((dept.completed / dept.total) * 100) : 0
         }));
@@ -1062,13 +1184,13 @@ function AdminDashboard() {
         const withIQAC = statusCounts.HOD_REVIEWED;
         const withPrincipal = statusCounts.IQAC_REVIEWED;
         const total = withHOD + withIQAC + withPrincipal;
-        
+
         return {
             withHOD,
             withIQAC,
             withPrincipal,
             total,
-            mostBacklog: withHOD >= withIQAC && withHOD >= withPrincipal ? 'HOD' 
+            mostBacklog: withHOD >= withIQAC && withHOD >= withPrincipal ? 'HOD'
                 : withIQAC >= withPrincipal ? 'IQAC' : 'Principal'
         };
     }, [statusCounts]);
@@ -1083,29 +1205,41 @@ function AdminDashboard() {
     const deptColumns = [
         { key: 'name', label: 'Department' },
         { key: 'total', label: 'Total' },
-        { key: 'draft', label: 'Draft', render: (val) => (
-            <span className={`font-medium ${val > 0 ? 'text-slate-600' : 'text-slate-400'}`}>{val}</span>
-        )},
-        { key: 'submitted', label: 'With HOD', render: (val) => (
-            <span className={`font-medium ${val > 0 ? 'text-amber-600' : 'text-slate-400'}`}>{val}</span>
-        )},
-        { key: 'hodReviewed', label: 'With IQAC', render: (val) => (
-            <span className={`font-medium ${val > 0 ? 'text-purple-600' : 'text-slate-400'}`}>{val}</span>
-        )},
-        { key: 'iqacReviewed', label: 'With Principal', render: (val) => (
-            <span className={`font-medium ${val > 0 ? 'text-blue-600' : 'text-slate-400'}`}>{val}</span>
-        )},
-        { key: 'completed', label: 'Completed', render: (val) => (
-            <span className="font-medium text-emerald-600">{val}</span>
-        )},
-        { key: 'completionRate', label: 'Progress', render: (val) => (
-            <div className="flex items-center gap-2">
-                <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${val}%` }} />
+        {
+            key: 'draft', label: 'Draft', render: (val) => (
+                <span className={`font-medium ${val > 0 ? 'text-slate-600' : 'text-slate-400'}`}>{val}</span>
+            )
+        },
+        {
+            key: 'submitted', label: 'With HOD', render: (val) => (
+                <span className={`font-medium ${val > 0 ? 'text-amber-600' : 'text-slate-400'}`}>{val}</span>
+            )
+        },
+        {
+            key: 'hodReviewed', label: 'With IQAC', render: (val) => (
+                <span className={`font-medium ${val > 0 ? 'text-purple-600' : 'text-slate-400'}`}>{val}</span>
+            )
+        },
+        {
+            key: 'iqacReviewed', label: 'With Principal', render: (val) => (
+                <span className={`font-medium ${val > 0 ? 'text-blue-600' : 'text-slate-400'}`}>{val}</span>
+            )
+        },
+        {
+            key: 'completed', label: 'Completed', render: (val) => (
+                <span className="font-medium text-emerald-600">{val}</span>
+            )
+        },
+        {
+            key: 'completionRate', label: 'Progress', render: (val) => (
+                <div className="flex items-center gap-2">
+                    <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${val}%` }} />
+                    </div>
+                    <span className="text-sm font-medium">{val}%</span>
                 </div>
-                <span className="text-sm font-medium">{val}%</span>
-            </div>
-        )},
+            )
+        },
     ];
 
     return (

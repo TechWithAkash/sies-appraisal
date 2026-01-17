@@ -228,8 +228,8 @@ export default function AdminUsersPage() {
                     <button
                         onClick={() => handleToggleActive(row.id)}
                         className={`p-2 rounded-lg ${row.isActive !== false
-                                ? 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'
-                                : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
+                            ? 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'
+                            : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
                             }`}
                         title={row.isActive !== false ? 'Deactivate' : 'Activate'}
                     >
